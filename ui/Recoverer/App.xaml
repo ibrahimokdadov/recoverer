@@ -10,6 +10,20 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
 
+            <!-- ── Override accent color to match brand ──────────────── -->
+            <ResourceDictionary.ThemeDictionaries>
+                <ResourceDictionary x:Key="Default">
+                    <Color x:Key="AccentColor">#3A9FDB</Color>
+                    <SolidColorBrush x:Key="SystemControlHighlightAccentBrush"
+                                     Color="{StaticResource AccentColor}" />
+                </ResourceDictionary>
+                <ResourceDictionary x:Key="Light">
+                    <Color x:Key="AccentColor">#3A9FDB</Color>
+                    <SolidColorBrush x:Key="SystemControlHighlightAccentBrush"
+                                     Color="{StaticResource AccentColor}" />
+                </ResourceDictionary>
+            </ResourceDictionary.ThemeDictionaries>
+
             <!-- ── Converters ─────────────────────────────────────────── -->
             <local:InverseBoolConverter          x:Key="NegBoolConverter" />
             <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisConverter" />
@@ -35,18 +49,6 @@
             <CornerRadius x:Key="CardCornerRadius">6</CornerRadius>
             <CornerRadius x:Key="ControlCornerRadius">4</CornerRadius>
             <Thickness x:Key="PageMargin">32,24,32,24</Thickness>
-
-            <!-- ── Override accent color to match brand ──────────────── -->
-            <ResourceDictionary.ThemeDictionaries>
-                <ResourceDictionary x:Key="Default">
-                    <SolidColorBrush x:Key="SystemControlHighlightAccentBrush"
-                                     Color="{StaticResource AccentColor}" />
-                </ResourceDictionary>
-                <ResourceDictionary x:Key="Light">
-                    <SolidColorBrush x:Key="SystemControlHighlightAccentBrush"
-                                     Color="{StaticResource AccentColor}" />
-                </ResourceDictionary>
-            </ResourceDictionary.ThemeDictionaries>
         </ResourceDictionary>
     </Application.Resources>
 </Application>
