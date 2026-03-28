@@ -19,13 +19,13 @@ public partial class App : Application
         MainWindow = new MainWindow(ViewModel);
         MainWindow.Activate();
 
+        var dispatcher = DispatcherQueue.GetForCurrentThread();
         _ = Task.Run(async () =>
         {
             var ok = await Services.EngineBootstrap.StartWithErrorHandlingAsync(
                 ViewModel.Engine, ViewModel.Pipe, MainWindow);
             if (!ok)
-                DispatcherQueue.GetForCurrentThread().TryEnqueue(
-                    () => ViewModel.StatusText = "Engine offline");
+                dispatcher.TryEnqueue(() => ViewModel.StatusText = "Engine offline");
         });
     }
 }
