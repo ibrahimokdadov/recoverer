@@ -21,6 +21,9 @@ pub enum EngineError {
     SameVolumeDenied,
     #[error("Destination path not found: {0}")]
     DestinationNotFound(String),
+    #[cfg(target_os = "windows")]
+    #[error("Windows API error: {0}")]
+    WindowsApi(#[from] windows::core::Error),
 }
 
 pub type Result<T> = std::result::Result<T, EngineError>;
