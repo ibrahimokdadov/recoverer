@@ -10,8 +10,8 @@ namespace Recoverer.ViewModels;
 /// </summary>
 public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
-    public readonly PipeClient Pipe;
-    public readonly EngineProcess Engine;
+    public PipeClient Pipe { get; }
+    public EngineProcess Engine { get; }
 
     [ObservableProperty] private AppPhase _phase = AppPhase.Setup;
     [ObservableProperty] private string _statusText = "Ready";
@@ -43,7 +43,7 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         switch (ev)
         {
             case PhaseChangeEvent pc:
-                if (pc.NewPhase == "mft_scan" || pc.NewPhase == "vss")
+                if (pc.NewPhase == "mft_scan" || pc.NewPhase == "vss" || pc.NewPhase == "carving")
                     Phase = AppPhase.Scanning;
                 break;
             case ScanCompleteEvent:
