@@ -1,0 +1,5 @@
+<Page x:Class="Recoverer.Views.ScanningPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <TextBlock Text="Scanning" VerticalAlignment="Center" HorizontalAlignment="Center" />
+</Page>

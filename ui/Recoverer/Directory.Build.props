@@ -1,0 +1,17 @@
+<Project>
+  <PropertyGroup>
+    <!--
+      Disable legacy MRT Core PRI generation tooling that requires the Visual Studio
+      AppxPackage MSBuild workload (Microsoft.Build.Packaging.Pri.Tasks.dll and
+      Microsoft.Build.AppxPackage.dll).  Those DLLs ship with the VS "Universal Windows
+      Platform development" or "Windows application development" workload, which is not
+      required to be installed for a dotnet-CLI build.
+
+      With EnableCoreMrtTooling=false, buildTransitive\MrtCore.PriGen.targets is not
+      imported, and the WinAppSDK-native PRI tooling in build\Microsoft.Build.Msix.targets
+      (using WinAppSdk-prefixed tasks) is used instead.
+    -->
+    <EnableCoreMrtTooling>false</EnableCoreMrtTooling>
+    <EnablePriGenTooling>false</EnablePriGenTooling>
+  </PropertyGroup>
+</Project>
