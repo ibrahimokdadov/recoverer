@@ -12,6 +12,5 @@
       (using WinAppSdk-prefixed tasks) is used instead.
     -->
     <EnableCoreMrtTooling>false</EnableCoreMrtTooling>
-    <EnablePriGenTooling>false</EnablePriGenTooling>
   </PropertyGroup>
 </Project>
