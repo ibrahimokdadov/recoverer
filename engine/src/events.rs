@@ -1,5 +1,14 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum RecoveryStatus {
+    Pending,
+    Recovered,
+    Failed,
+    Skipped,
+}
+
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "event")]
 pub enum Event {
@@ -59,6 +68,7 @@ pub struct FileRecord {
     pub size_bytes: u64,
     pub confidence: u8,
     pub source: String,
-    pub recovery_status: String,
+    pub recovery_status: RecoveryStatus,
+    /// Unix timestamp (seconds since 1970-01-01 UTC) of the file's last modification.
     pub modified_at: Option<i64>,
 }

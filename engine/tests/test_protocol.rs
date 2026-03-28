@@ -1,4 +1,4 @@
-use recoverer_engine::commands::Command;
+use recoverer_engine::commands::{Command, ScanDepth};
 use recoverer_engine::events::Event;
 
 #[test]
@@ -8,7 +8,7 @@ fn deserialize_start_scan_command() {
     match cmd {
         Command::StartScan { drive, depth, categories } => {
             assert_eq!(drive, "C:\\");
-            assert_eq!(depth, "deep");
+            assert_eq!(depth, ScanDepth::Deep);
             assert_eq!(categories, vec!["Images", "Videos"]);
         }
         _ => panic!("wrong variant"),
