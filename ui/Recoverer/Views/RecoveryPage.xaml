@@ -97,8 +97,8 @@
                     Command="{x:Bind ViewModel.StartRecoveryCommand}"
                     Style="{StaticResource AccentButtonStyle}"
                     HorizontalAlignment="Right"
-                    Visibility="{x:Bind ViewModel.IsRecovering, Mode=OneWay,
-                                  Converter={StaticResource InverseBoolToVisConverter}}" />
+                    Visibility="{x:Bind ViewModel.CanStartRecovery, Mode=OneWay,
+                                  Converter={StaticResource BoolToVisConverter}}" />
         </StackPanel>
     </Grid>
 </Page>

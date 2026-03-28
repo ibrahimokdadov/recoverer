@@ -44,19 +44,29 @@ public sealed partial class RecoveryViewModel : ObservableObject
     [RelayCommand]
     private async Task StartRecoveryAsync()
     {
-        if (string.IsNullOrWhiteSpace(Destination)) return;
+        if (string.IsNullOrWhiteSpace(Destination) || FilesToRecover.Count == 0) return;
 
         IsRecovering = true;
         IsComplete   = false;
         Recovered = Warnings = Failed = 0;
 
-        var ids = FilesToRecover.Select(f => f.Id);
-        await _pipe.SendAsync(Commands.RecoverFiles(ids, Destination, RecreateStructure));
+        try
+        {
+            var ids = FilesToRecover.Select(f => f.Id).ToArray();
+            await _pipe.SendAsync(Commands.RecoverFiles(ids, Destination, RecreateStructure));
+        }
+        catch
+        {
+            IsRecovering = false;
+        }
     }
 
     [RelayCommand]
-    private async Task CancelRecoveryAsync() =>
-        await _pipe.SendAsync(Commands.CancelScan());
+    private async Task CancelRecoveryAsync()
+    {
+        try { await _pipe.SendAsync(Commands.CancelScan()); }
+        catch { /* pipe already closed */ }
+    }
 
     private void OnEvent(EngineEvent ev)
     {
@@ -82,8 +92,12 @@ public sealed partial class RecoveryViewModel : ObservableObject
         }
     }
 
+    public bool CanStartRecovery => !IsRecovering && !IsComplete;
+
     partial void OnRecoveredChanged(ulong value) => OnPropertyChanged(nameof(ProgressPct));
     partial void OnTotalChanged(ulong value)     => OnPropertyChanged(nameof(ProgressPct));
+    partial void OnIsRecoveringChanged(bool value) => OnPropertyChanged(nameof(CanStartRecovery));
+    partial void OnIsCompleteChanged(bool value) => OnPropertyChanged(nameof(CanStartRecovery));
 
     public void OpenDestinationInExplorer()
     {
