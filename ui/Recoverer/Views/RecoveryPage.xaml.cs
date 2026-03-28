@@ -1,4 +1,3 @@
-using Windows.Storage.Pickers;
 using WinRT.Interop;
 using Microsoft.UI.Xaml.Controls;
 using Recoverer.ViewModels;
@@ -21,14 +20,11 @@ public sealed partial class RecoveryPage : Page
             ViewModel.SetFiles(files);
     }
 
-    private async void BrowseDestination_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    private void BrowseDestination_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        var picker = new FolderPicker();
-        picker.FileTypeFilter.Add("*");
-        InitializeWithWindow.Initialize(picker,
-            WindowNative.GetWindowHandle(App.Current.MainWindow!));
-        var folder = await picker.PickSingleFolderAsync();
-        if (folder is not null) ViewModel.Destination = folder.Path;
+        var hwnd = WindowNative.GetWindowHandle(App.Current.MainWindow!);
+        var path = Win32FolderDialog.Pick(hwnd);
+        if (path is not null) ViewModel.Destination = path;
     }
 
     private void OpenExplorer_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
