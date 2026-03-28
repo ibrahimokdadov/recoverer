@@ -1,4 +1,4 @@
-use recoverer_engine::scan::carver::{carve_buffer, CarvingResult};
+use recoverer_engine::scan::carver::carve_buffer;
 
 fn buffer_with_jpeg_at(offset: usize) -> Vec<u8> {
     let mut buf = vec![0xAAu8; 4096];
