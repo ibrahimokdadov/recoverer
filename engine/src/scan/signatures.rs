@@ -32,19 +32,18 @@ pub static SIGNATURES: &[Signature] = &[
     Signature { mime_type: "image/bmp", category: "Images",
         header: &[0x42, 0x4D], header_offset: 0,
         footer: None, max_size: 50 * 1024 * 1024 },
+    // RAW formats — CR2 must come before TIFF LE (same first 4 bytes, CR2 has more specific 10-byte header)
+    Signature { mime_type: "image/x-canon-cr2", category: "Images",
+        header: &[0x49, 0x49, 0x2A, 0x00, 0x10, 0x00, 0x00, 0x00, 0x43, 0x52], header_offset: 0,
+        footer: None, max_size: 50 * 1024 * 1024 },
     Signature { mime_type: "image/tiff", category: "Images",
         header: &[0x49, 0x49, 0x2A, 0x00], header_offset: 0,
         footer: None, max_size: 200 * 1024 * 1024 },
     Signature { mime_type: "image/tiff", category: "Images",
         header: &[0x4D, 0x4D, 0x00, 0x2A], header_offset: 0,
         footer: None, max_size: 200 * 1024 * 1024 },
-    // RAW formats
-    Signature { mime_type: "image/x-canon-cr2", category: "Images",
-        header: &[0x49, 0x49, 0x2A, 0x00, 0x10, 0x00, 0x00, 0x00, 0x43, 0x52], header_offset: 0,
-        footer: None, max_size: 50 * 1024 * 1024 },
-    Signature { mime_type: "image/x-nikon-nef", category: "Images",
-        header: &[0x4D, 0x4D, 0x00, 0x2A], header_offset: 0,
-        footer: None, max_size: 50 * 1024 * 1024 },
+    // NOTE: NEF (Nikon) uses the same big-endian TIFF header [0x4D, 0x4D, 0x00, 0x2A] as TIFF BE;
+    // no further discrimination is possible at the signature level, so NEF is omitted here.
     // Videos
     Signature { mime_type: "video/mp4", category: "Videos",
         header: b"ftyp", header_offset: 4,
@@ -68,8 +67,12 @@ pub static SIGNATURES: &[Signature] = &[
     Signature { mime_type: "audio/flac", category: "Audio",
         header: b"fLaC", header_offset: 0,
         footer: None, max_size: 2 * 1024 * 1024 * 1024 },
+    // WAV: cannot use RIFF at offset 0 (collides with AVI). Instead match on the
+    // "fmt " chunk marker at offset 12, which is present in all standard WAV files.
+    // The `infer` crate handles WAV identification correctly for non-carving use.
     Signature { mime_type: "audio/wav", category: "Audio",
-        header: b"RIFF", header_offset: 0,
+        header: b"fmt ",   // The fmt chunk marker
+        header_offset: 12,
         footer: None, max_size: 2 * 1024 * 1024 * 1024 },
     Signature { mime_type: "audio/ogg", category: "Audio",
         header: b"OggS", header_offset: 0,
@@ -93,7 +96,7 @@ pub static SIGNATURES: &[Signature] = &[
         header: &[0x37, 0x7A, 0xBC, 0xAF, 0x27, 0x1C], header_offset: 0,
         footer: None, max_size: 5 * 1024 * 1024 * 1024 },
     Signature { mime_type: "application/gzip", category: "Archives",
-        header: &[0x1F, 0x8B], header_offset: 0,
+        header: &[0x1F, 0x8B, 0x08], header_offset: 0,  // 0x08 = DEFLATE compression method (always present)
         footer: None, max_size: 5 * 1024 * 1024 * 1024 },
 ];
 

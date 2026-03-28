@@ -1,5 +1,6 @@
 use crate::scan::signatures::mime_to_category;
 
+#[derive(Debug)]
 pub struct FileTypeResult {
     pub mime_type: String,
     pub category: String,
@@ -51,13 +52,14 @@ fn detect_office_format(bytes: &[u8]) -> Option<String> {
     let sample = &bytes[..bytes.len().min(2048)];
     let sample_str = String::from_utf8_lossy(sample);
 
-    if sample_str.contains("word/") || sample_str.contains("wordprocessingml") {
+    // Look for specific OOXML content type markers
+    if sample_str.contains("wordprocessingml") || sample_str.contains("word/document") {
         return Some("application/vnd.openxmlformats-officedocument.wordprocessingml.document".to_string());
     }
-    if sample_str.contains("xl/") || sample_str.contains("spreadsheetml") {
+    if sample_str.contains("spreadsheetml") || sample_str.contains("xl/workbook") {
         return Some("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet".to_string());
     }
-    if sample_str.contains("ppt/") || sample_str.contains("presentationml") {
+    if sample_str.contains("presentationml") || sample_str.contains("ppt/presentation") {
         return Some("application/vnd.openxmlformats-officedocument.presentationml.presentation".to_string());
     }
     None
