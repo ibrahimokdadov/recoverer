@@ -39,3 +39,10 @@ public class PercentConverter : IValueConverter
     public object ConvertBack(object v, Type t, object p, string l) =>
         throw new NotSupportedException();
 }
+
+public class CountToBoolConverter : IValueConverter
+{
+    public object Convert(object v, Type t, object p, string l) => v is int n && n > 0;
+    public object ConvertBack(object v, Type t, object p, string l) =>
+        throw new NotSupportedException();
+}

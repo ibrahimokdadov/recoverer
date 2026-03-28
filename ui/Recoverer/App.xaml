@@ -13,6 +13,8 @@
             <local:InverseBoolConverter x:Key="NegBoolConverter" />
             <local:PauseResumeTextConverter x:Key="PauseResumeTextConverter" />
             <local:PercentConverter x:Key="PctConverter" />
+            <local:FileSizeConverter x:Key="FileSizeConverter" />
+            <local:CountToBoolConverter x:Key="CountToBoolConverter" />
         </ResourceDictionary>
     </Application.Resources>
 </Application>

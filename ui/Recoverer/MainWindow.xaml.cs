@@ -57,6 +57,13 @@ public sealed partial class MainWindow : Window
             ContentFrame.Navigate(typeof(Views.ResultsPage));
         }
     }
+
+    public void NavigateToRecovery(IReadOnlyList<FileRecord> files)
+    {
+        NavRecovery.IsEnabled = true;
+        NavView.SelectedItem = NavRecovery;
+        ContentFrame.Navigate(typeof(Views.RecoveryPage), files);
+    }
 }
 
 public enum AppPhase { Setup, Scanning, Results, Recovery }
