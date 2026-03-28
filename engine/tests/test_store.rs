@@ -1,10 +1,12 @@
 use recoverer_engine::store::{Store, NewFile};
+use recoverer_engine::events::RecoveryStatus;
 use tempfile::tempdir;
 
-fn make_store() -> Store {
+fn make_store() -> (Store, tempfile::TempDir) {
     let dir = tempdir().unwrap();
     let db_path = dir.path().join("test.db");
-    Store::open(db_path.to_str().unwrap()).unwrap()
+    let store = Store::open(db_path.to_str().unwrap()).unwrap();
+    (store, dir)
 }
 
 fn jpeg_file(filename: &str, confidence: u8) -> NewFile {
@@ -26,7 +28,7 @@ fn jpeg_file(filename: &str, confidence: u8) -> NewFile {
 
 #[test]
 fn insert_and_retrieve_file() {
-    let store = make_store();
+    let (store, _dir) = make_store();
     let id = store.insert_file(&jpeg_file("photo.jpg", 95)).unwrap();
     assert!(id > 0);
 
@@ -37,7 +39,7 @@ fn insert_and_retrieve_file() {
 
 #[test]
 fn filter_by_category() {
-    let store = make_store();
+    let (store, _dir) = make_store();
     store.insert_file(&jpeg_file("photo.jpg", 95)).unwrap();
     store.insert_file(&NewFile {
         filename: Some("doc.pdf".to_string()),
@@ -55,7 +57,7 @@ fn filter_by_category() {
 
 #[test]
 fn filter_by_min_confidence() {
-    let store = make_store();
+    let (store, _dir) = make_store();
     store.insert_file(&jpeg_file("high.jpg", 90)).unwrap();
     store.insert_file(&jpeg_file("low.jpg", 40)).unwrap();
 
@@ -66,7 +68,7 @@ fn filter_by_min_confidence() {
 
 #[test]
 fn filter_by_name_contains() {
-    let store = make_store();
+    let (store, _dir) = make_store();
     store.insert_file(&jpeg_file("vacation_2023.jpg", 90)).unwrap();
     store.insert_file(&jpeg_file("work_report.jpg", 90)).unwrap();
 
@@ -77,7 +79,7 @@ fn filter_by_name_contains() {
 
 #[test]
 fn total_count_matches() {
-    let store = make_store();
+    let (store, _dir) = make_store();
     for i in 0..5 {
         store.insert_file(&jpeg_file(&format!("photo{i}.jpg"), 90)).unwrap();
     }
@@ -87,10 +89,25 @@ fn total_count_matches() {
 
 #[test]
 fn update_recovery_status() {
-    let store = make_store();
+    let (store, _dir) = make_store();
     let id = store.insert_file(&jpeg_file("photo.jpg", 95)).unwrap();
-    store.update_recovery_status(id, "recovered").unwrap();
+    store.update_recovery_status(id, RecoveryStatus::Recovered).unwrap();
 
     let files = store.query_files(None, None, None, 0, 10).unwrap();
-    assert_eq!(files[0].recovery_status, recoverer_engine::events::RecoveryStatus::Recovered);
+    assert_eq!(files[0].recovery_status, RecoveryStatus::Recovered);
+}
+
+#[test]
+fn checkpoint_round_trip() {
+    let (store, _dir) = make_store();
+    store.save_checkpoint("mft_offset", "12345").unwrap();
+    let val = store.load_checkpoint("mft_offset").unwrap();
+    assert_eq!(val, Some("12345".to_string()));
+}
+
+#[test]
+fn load_missing_checkpoint_returns_none() {
+    let (store, _dir) = make_store();
+    let val = store.load_checkpoint("nonexistent").unwrap();
+    assert!(val.is_none());
 }

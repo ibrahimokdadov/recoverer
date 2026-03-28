@@ -2,6 +2,7 @@
 pub mod commands;
 pub mod error;
 pub mod events;
+pub mod store;
 
 fn main() {
     env_logger::init();

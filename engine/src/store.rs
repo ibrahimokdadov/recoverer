@@ -1,9 +1,10 @@
 use crate::error::Result;
 use crate::events::{FileRecord, RecoveryStatus};
 use rusqlite::{Connection, params, types::ToSql};
+use std::sync::Mutex;
 
 pub struct Store {
-    conn: Connection,
+    conn: Mutex<Connection>,
 }
 
 pub struct NewFile {
@@ -51,11 +52,12 @@ impl Store {
                 value TEXT NOT NULL
             );
         ")?;
-        Ok(Self { conn })
+        Ok(Self { conn: Mutex::new(conn) })
     }
 
     pub fn insert_file(&self, f: &NewFile) -> Result<i64> {
-        self.conn.execute(
+        let conn = self.conn.lock().unwrap();
+        conn.execute(
             "INSERT INTO files (filename, original_path, mime_type, category, size_bytes,
              first_cluster, confidence, source, mft_record_number, created_at, modified_at, deleted_at)
              VALUES (?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12)",
@@ -66,7 +68,7 @@ impl Store {
                 f.created_at, f.modified_at, f.deleted_at
             ],
         )?;
-        Ok(self.conn.last_insert_rowid())
+        Ok(conn.last_insert_rowid())
     }
 
     pub fn query_files(
@@ -77,7 +79,10 @@ impl Store {
         offset: i64,
         limit: i64,
     ) -> Result<Vec<FileRecord>> {
-        let like_pattern = name_contains.map(|n| format!("%{}%", n));
+        let like_pattern = name_contains.map(|n| {
+            let escaped = n.replace('\\', "\\\\").replace('%', "\\%").replace('_', "\\_");
+            format!("%{}%", escaped)
+        });
 
         let mut conditions: Vec<String> = Vec::new();
         let mut p: Vec<Box<dyn ToSql>> = Vec::new();
@@ -92,7 +97,7 @@ impl Store {
         }
         if let Some(ref lp) = like_pattern {
             p.push(Box::new(lp.clone()));
-            conditions.push(format!("filename LIKE ?{} COLLATE NOCASE", p.len()));
+            conditions.push(format!("filename LIKE ?{} ESCAPE '\\' COLLATE NOCASE", p.len()));
         }
 
         let where_clause = if conditions.is_empty() {
@@ -113,7 +118,8 @@ impl Store {
         );
 
         let p_refs: Vec<&dyn ToSql> = p.iter().map(|b| b.as_ref()).collect();
-        let mut stmt = self.conn.prepare(&sql)?;
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(&sql)?;
         let rows = stmt.query_map(p_refs.as_slice(), |row| {
             let status_str: String = row.get(8)?;
             let recovery_status = match status_str.as_str() {
@@ -145,7 +151,10 @@ impl Store {
         min_confidence: Option<i32>,
         name_contains: Option<&str>,
     ) -> Result<i64> {
-        let like_pattern = name_contains.map(|n| format!("%{}%", n));
+        let like_pattern = name_contains.map(|n| {
+            let escaped = n.replace('\\', "\\\\").replace('%', "\\%").replace('_', "\\_");
+            format!("%{}%", escaped)
+        });
 
         let mut conditions: Vec<String> = Vec::new();
         let mut p: Vec<Box<dyn ToSql>> = Vec::new();
@@ -160,7 +169,7 @@ impl Store {
         }
         if let Some(ref lp) = like_pattern {
             p.push(Box::new(lp.clone()));
-            conditions.push(format!("filename LIKE ?{} COLLATE NOCASE", p.len()));
+            conditions.push(format!("filename LIKE ?{} ESCAPE '\\' COLLATE NOCASE", p.len()));
         }
 
         let where_clause = if conditions.is_empty() {
@@ -172,19 +181,25 @@ impl Store {
         let sql = format!("SELECT COUNT(*) FROM files {}", where_clause);
         let p_refs: Vec<&dyn ToSql> = p.iter().map(|b| b.as_ref()).collect();
 
-        Ok(self.conn.query_row(&sql, p_refs.as_slice(), |row| row.get(0))?)
+        Ok(self.conn.lock().unwrap().query_row(&sql, p_refs.as_slice(), |row| row.get(0))?)
     }
 
-    pub fn update_recovery_status(&self, id: i64, status: &str) -> Result<()> {
-        self.conn.execute(
+    pub fn update_recovery_status(&self, id: i64, status: RecoveryStatus) -> Result<()> {
+        let status_str = match status {
+            RecoveryStatus::Pending => "pending",
+            RecoveryStatus::Recovered => "recovered",
+            RecoveryStatus::Failed => "failed",
+            RecoveryStatus::Skipped => "skipped",
+        };
+        self.conn.lock().unwrap().execute(
             "UPDATE files SET recovery_status = ?1 WHERE id = ?2",
-            params![status, id],
+            params![status_str, id],
         )?;
         Ok(())
     }
 
     pub fn save_checkpoint(&self, key: &str, value: &str) -> Result<()> {
-        self.conn.execute(
+        self.conn.lock().unwrap().execute(
             "INSERT OR REPLACE INTO scan_checkpoint (key, value) VALUES (?1, ?2)",
             params![key, value],
         )?;
@@ -192,7 +207,7 @@ impl Store {
     }
 
     pub fn load_checkpoint(&self, key: &str) -> Result<Option<String>> {
-        let result = self.conn.query_row(
+        let result = self.conn.lock().unwrap().query_row(
             "SELECT value FROM scan_checkpoint WHERE key = ?1",
             params![key],
             |row| row.get(0),
