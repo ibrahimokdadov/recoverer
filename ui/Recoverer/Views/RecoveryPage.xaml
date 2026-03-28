@@ -1,5 +1,104 @@
 <Page x:Class="Recoverer.Views.RecoveryPage"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <TextBlock Text="Recovery" VerticalAlignment="Center" HorizontalAlignment="Center" />
+
+    <Grid Margin="32,24,32,24" MaxWidth="600" RowSpacing="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Same-volume warning -->
+        <InfoBar Grid.Row="0"
+                 IsOpen="{x:Bind ViewModel.ShowSameVolumeWarning, Mode=OneWay}"
+                 Severity="Error"
+                 Title="Same drive detected"
+                 Message="Saving to the same drive could overwrite other recoverable files. Choose a different drive." />
+
+        <!-- Destination picker -->
+        <StackPanel Grid.Row="1" Spacing="8">
+            <TextBlock Text="DESTINATION FOLDER"
+                       Style="{StaticResource CaptionTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <Grid ColumnSpacing="8">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <TextBox Grid.Column="0"
+                         Text="{x:Bind ViewModel.Destination, Mode=TwoWay}"
+                         PlaceholderText="D:\Recovered Files" />
+                <Button Grid.Column="1" Content="Browse"
+                        Click="BrowseDestination_Click" />
+            </Grid>
+        </StackPanel>
+
+        <!-- Options -->
+        <StackPanel Grid.Row="2" Spacing="8">
+            <TextBlock Text="OPTIONS"
+                       Style="{StaticResource CaptionTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            <CheckBox Content="Recreate original folder structure"
+                      IsChecked="{x:Bind ViewModel.RecreateStructure, Mode=TwoWay}" />
+        </StackPanel>
+
+        <!-- File summary -->
+        <TextBlock Grid.Row="3">
+            <Run Text="{x:Bind ViewModel.Total, Mode=OneWay}" />
+            <Run Text=" files selected for recovery" />
+        </TextBlock>
+
+        <!-- Progress / Result -->
+        <StackPanel Grid.Row="4" Spacing="12">
+
+            <!-- In-progress -->
+            <StackPanel Visibility="{x:Bind ViewModel.IsRecovering, Mode=OneWay,
+                                      Converter={StaticResource BoolToVisConverter}}"
+                        Spacing="8">
+                <ProgressBar Maximum="100"
+                             Value="{x:Bind ViewModel.ProgressPct, Mode=OneWay}" />
+                <StackPanel Orientation="Horizontal" Spacing="16">
+                    <TextBlock Foreground="#3DB87A">
+                        <Run Text="&#x2713; " /><Run Text="{x:Bind ViewModel.Recovered, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock Foreground="#E0A020">
+                        <Run Text="&#x26A0; " /><Run Text="{x:Bind ViewModel.Warnings, Mode=OneWay}" />
+                    </TextBlock>
+                    <TextBlock Foreground="#D95858">
+                        <Run Text="&#x2715; " /><Run Text="{x:Bind ViewModel.Failed, Mode=OneWay}" />
+                    </TextBlock>
+                </StackPanel>
+                <Button Content="Cancel Remaining"
+                        Command="{x:Bind ViewModel.CancelRecoveryCommand}" />
+            </StackPanel>
+
+            <!-- Complete -->
+            <StackPanel Visibility="{x:Bind ViewModel.IsComplete, Mode=OneWay,
+                                      Converter={StaticResource BoolToVisConverter}}"
+                        Spacing="8">
+                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}">
+                    <Run Text="&#x2713; " Foreground="#3DB87A" />
+                    <Run Text="{x:Bind ViewModel.Recovered, Mode=OneWay}" />
+                    <Run Text=" recovered" />
+                </TextBlock>
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <Button Content="View in File Explorer"
+                            Click="OpenExplorer_Click" />
+                    <Button Content="Scan Again"
+                            Click="ScanAgain_Click" />
+                </StackPanel>
+            </StackPanel>
+
+            <!-- Start button (shown when not in progress or complete) -->
+            <Button Content="Start Recovery &#x2192;"
+                    Command="{x:Bind ViewModel.StartRecoveryCommand}"
+                    Style="{StaticResource AccentButtonStyle}"
+                    HorizontalAlignment="Right"
+                    Visibility="{x:Bind ViewModel.IsRecovering, Mode=OneWay,
+                                  Converter={StaticResource InverseBoolToVisConverter}}" />
+        </StackPanel>
+    </Grid>
 </Page>

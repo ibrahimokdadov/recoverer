@@ -17,6 +17,14 @@ public class InverseBoolToVisibilityConverter : IValueConverter
         throw new NotSupportedException();
 }
 
+public class BoolToVisibilityConverter : IValueConverter
+{
+    public object Convert(object v, Type t, object p, string l) =>
+        v is bool b && b ? Visibility.Visible : Visibility.Collapsed;
+    public object ConvertBack(object v, Type t, object p, string l) =>
+        throw new NotSupportedException();
+}
+
 public class NullToVisibilityConverter : IValueConverter
 {
     public object Convert(object v, Type t, object p, string l) =>

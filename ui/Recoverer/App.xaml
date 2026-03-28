@@ -10,6 +10,7 @@
             </ResourceDictionary.MergedDictionaries>
             <local:NullToVisibilityConverter x:Key="NullToVisConverter" />
             <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisConverter" />
+            <local:BoolToVisibilityConverter x:Key="BoolToVisConverter" />
             <local:InverseBoolConverter x:Key="NegBoolConverter" />
             <local:PauseResumeTextConverter x:Key="PauseResumeTextConverter" />
             <local:PercentConverter x:Key="PctConverter" />

@@ -64,6 +64,12 @@ public sealed partial class MainWindow : Window
         NavView.SelectedItem = NavRecovery;
         ContentFrame.Navigate(typeof(Views.RecoveryPage), files);
     }
+
+    public void NavigateToSetup()
+    {
+        NavView.SelectedItem = NavSetup;
+        ContentFrame.Navigate(typeof(Views.SetupPage));
+    }
 }
 
 public enum AppPhase { Setup, Scanning, Results, Recovery }
