@@ -87,3 +87,23 @@ fn byte_offset_includes_buffer_base_offset() {
     let jpeg = results.iter().find(|r| r.mime_type == "image/jpeg").unwrap();
     assert_eq!(jpeg.byte_offset, base_offset);
 }
+
+fn buffer_with_webp_at(offset: usize) -> Vec<u8> {
+    let mut buf = vec![0x00u8; 4096];
+    // RIFF at offset (4 bytes)
+    buf[offset..offset + 4].copy_from_slice(b"RIFF");
+    // file size (4 bytes) — doesn't matter for carving
+    buf[offset + 4..offset + 8].copy_from_slice(&[0x00, 0x10, 0x00, 0x00]);
+    // WEBP at offset + 8
+    buf[offset + 8..offset + 12].copy_from_slice(b"WEBP");
+    buf
+}
+
+#[test]
+fn find_webp_with_nonzero_header_offset() {
+    let buf = buffer_with_webp_at(0);
+    let results = carve_buffer(&buf, 0);
+    let webp = results.iter().find(|r| r.mime_type == "image/webp");
+    assert!(webp.is_some(), "WEBP at header_offset=8 should be found");
+    assert_eq!(webp.unwrap().byte_offset, 0);
+}

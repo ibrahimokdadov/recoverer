@@ -29,23 +29,19 @@ pub fn carve_buffer(buf: &[u8], base_offset: u64) -> Vec<CarvingResult> {
                     find_footer(buf, pos, footer)
                         .map(|end| (end - pos) as u64)
                 });
-
                 results.push(CarvingResult {
                     byte_offset: base_offset + pos as u64,
                     mime_type: sig.mime_type.to_string(),
                     category: mime_to_category(sig.mime_type).to_string(),
                     estimated_size,
                 });
-
-                // Advance past this match to avoid re-matching the same position
-                pos += header.len() + hoff;
-            } else {
-                pos += 1;
             }
+            pos += 1;
         }
     }
 
-    // Sort by offset, deduplicate same-offset matches (keep highest-priority signature)
+    // sort_by_key is a stable sort — equal-offset entries retain their SIGNATURES insertion order,
+    // so dedup_by_key keeps the highest-priority (first in SIGNATURES) match at each offset.
     results.sort_by_key(|r| r.byte_offset);
     results.dedup_by_key(|r| r.byte_offset);
     results
