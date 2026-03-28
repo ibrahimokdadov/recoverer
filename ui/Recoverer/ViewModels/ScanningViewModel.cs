@@ -76,16 +76,20 @@ public sealed partial class ScanningViewModel : ObservableObject
     [RelayCommand]
     private async Task PauseResumeAsync()
     {
-        if (IsPaused)
+        try
         {
-            await _pipe.SendAsync(Commands.ResumeScan());
-            IsPaused = false;
+            if (IsPaused)
+            {
+                await _pipe.SendAsync(Commands.ResumeScan());
+                IsPaused = false;
+            }
+            else
+            {
+                await _pipe.SendAsync(Commands.PauseScan());
+                IsPaused = true;
+            }
         }
-        else
-        {
-            await _pipe.SendAsync(Commands.PauseScan());
-            IsPaused = true;
-        }
+        catch (Exception) { /* send failed — IsPaused unchanged, button keeps correct label */ }
     }
 
     [RelayCommand]
