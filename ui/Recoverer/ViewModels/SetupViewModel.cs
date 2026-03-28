@@ -51,7 +51,7 @@ public sealed partial class SetupViewModel : ObservableObject
         }
     }
 
-    [RelayCommand]
+    [RelayCommand(CanExecute = nameof(CanStartScan))]
     private async Task StartScanAsync()
     {
         var drive = ScanEntireDrive ? SelectedDrive : CustomFolder;
@@ -60,8 +60,20 @@ public sealed partial class SetupViewModel : ObservableObject
         await _pipe.SendAsync(Commands.StartScan(drive, depth, cats));
     }
 
+    private bool CanStartScan() =>
+        ScanEntireDrive ? SelectedDrive.Length > 0 : CustomFolder.Length > 0;
+
     [RelayCommand]
     private void DismissBanner() => ShowFirstLaunchBanner = false;
+
+    partial void OnScanEntireDriveChanged(bool value) =>
+        StartScanCommand.NotifyCanExecuteChanged();
+
+    partial void OnSelectedDriveChanged(string value) =>
+        StartScanCommand.NotifyCanExecuteChanged();
+
+    partial void OnCustomFolderChanged(string value) =>
+        StartScanCommand.NotifyCanExecuteChanged();
 
     private IEnumerable<string> BuildCategoryList()
     {
