@@ -7,19 +7,19 @@ namespace Recoverer;
 public sealed partial class MainWindow : Window
 {
     private readonly MainViewModel _vm;
+    private readonly Windows.UI.ViewManagement.UISettings _uiSettings = new();
 
     public MainWindow(MainViewModel vm)
     {
         InitializeComponent();
 
         // Respect Windows system dark/light preference
-        var uiSettings = new Windows.UI.ViewManagement.UISettings();
-        ApplyTheme(uiSettings.GetColorValue(Windows.UI.ViewManagement.UIColorType.Background));
-        uiSettings.ColorValuesChanged += (s, _) =>
+        ApplyTheme(_uiSettings.GetColorValue(Windows.UI.ViewManagement.UIColorType.Background));
+        _uiSettings.ColorValuesChanged += (s, _) =>
             DispatcherQueue.TryEnqueue(() =>
                 ApplyTheme(s.GetColorValue(Windows.UI.ViewManagement.UIColorType.Background)));
 
-        // Minimum window size: 900×600
+        // Set initial window size to 1024×700
         var appWindow = Microsoft.UI.Windowing.AppWindow.GetFromWindowId(
             Microsoft.UI.Win32Interop.GetWindowIdFromWindow(
                 WinRT.Interop.WindowNative.GetWindowHandle(this)));
