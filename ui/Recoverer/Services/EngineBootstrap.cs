@@ -48,18 +48,26 @@ public static class EngineBootstrap
     private static Task ShowError(MainWindow window, string title, string message)
     {
         var tcs = new TaskCompletionSource();
-        window.DispatcherQueue.TryEnqueue(async () =>
+        bool enqueued = window.DispatcherQueue.TryEnqueue(async () =>
         {
-            var dialog = new ContentDialog
+            try
             {
-                Title = title,
-                Content = message,
-                CloseButtonText = "OK",
-                XamlRoot = window.Content.XamlRoot
-            };
-            await dialog.ShowAsync();
-            tcs.SetResult();
+                var dialog = new ContentDialog
+                {
+                    Title = title,
+                    Content = message,
+                    CloseButtonText = "OK",
+                    XamlRoot = window.Content.XamlRoot
+                };
+                await dialog.ShowAsync();
+                tcs.SetResult();
+            }
+            catch (Exception ex)
+            {
+                tcs.SetException(ex);
+            }
         });
+        if (!enqueued) tcs.SetResult();
         return tcs.Task;
     }
 }
