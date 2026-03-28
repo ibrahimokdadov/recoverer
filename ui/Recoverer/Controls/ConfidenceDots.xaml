@@ -1,5 +1,11 @@
 <UserControl x:Class="Recoverer.Controls.ConfidenceDots"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <TextBlock x:Name="ValueText" />
+    <StackPanel Orientation="Horizontal" Spacing="3" VerticalAlignment="Center">
+        <Ellipse x:Name="Dot1" Width="8" Height="8" />
+        <Ellipse x:Name="Dot2" Width="8" Height="8" />
+        <Ellipse x:Name="Dot3" Width="8" Height="8" />
+        <Ellipse x:Name="Dot4" Width="8" Height="8" />
+        <Ellipse x:Name="Dot5" Width="8" Height="8" />
+    </StackPanel>
 </UserControl>
