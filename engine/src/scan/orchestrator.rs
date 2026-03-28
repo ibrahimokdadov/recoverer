@@ -85,9 +85,12 @@ impl ScanOrchestrator {
             }
         };
 
+        if boot.mft_lcn <= 0 {
+            return Ok(());
+        }
         let mft_byte_offset = boot.mft_lcn as u64 * boot.bytes_per_cluster as u64;
         let mft_start_sector = mft_byte_offset / boot.bytes_per_sector as u64;
-        let record_size_sectors = 2u64; // 1024 byte records / 512 bytes per sector
+        let record_size_sectors = (1024u64).div_ceil(boot.bytes_per_sector as u64).max(1);
 
         // Read MFT in chunks of 256 records
         let chunk_records = 256u64;
@@ -118,7 +121,7 @@ impl ScanOrchestrator {
             };
 
             // Process records in this chunk (CPU-bound, use rayon in a blocking task)
-            let records_data = chunk.clone();
+            let records_data = chunk;
             let record_size = 1024usize;
 
             let parsed: Vec<_> = (0..chunk_records as usize)
@@ -180,7 +183,7 @@ impl ScanOrchestrator {
                 });
 
                 if files_count % 100 == 0 {
-                    let pct = ((record_idx * record_size_sectors * 100) / boot.total_sectors.max(1)) as u8;
+                    let pct = ((record_idx * 100) / total_mft_records.max(1)) as u8;
                     let _ = self.event_tx.try_send(Event::Progress {
                         phase: "mft_scan".to_string(),
                         pct: pct.min(50), // MFT scan = first 50% of total progress
@@ -236,7 +239,7 @@ impl ScanOrchestrator {
                     mime_type: result.mime_type.clone(),
                     category: result.category.clone(),
                     size_bytes: result.estimated_size.unwrap_or(0),
-                    first_cluster: Some(sector / reader.bytes_per_sector as u64),
+                    first_cluster: Some(sector),
                     confidence: 45,
                     source: "carved".to_string(),
                     mft_record_number: None,
