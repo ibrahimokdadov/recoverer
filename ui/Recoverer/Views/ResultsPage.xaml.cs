@@ -19,12 +19,16 @@ public sealed partial class ResultsPage : Page
     protected override void OnNavigatedFrom(NavigationEventArgs e)
     {
         base.OnNavigatedFrom(e);
+        _searchDebounce?.Cancel();
+        _searchDebounce?.Dispose();
+        _searchDebounce = null;
         ViewModel.Detach();
     }
 
     private async void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
     {
         _searchDebounce?.Cancel();
+        _searchDebounce?.Dispose();
         _searchDebounce = new CancellationTokenSource();
         try
         {
