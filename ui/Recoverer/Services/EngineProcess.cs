@@ -29,9 +29,7 @@ public sealed class EngineProcess : IDisposable
                 RedirectStandardOutput = false,
                 RedirectStandardError  = false,
             },
-            EnableRaisingEvents = true,
         };
-        _process.Exited += (_, _) => { /* log or reconnect */ };
         _process.Start();
     }
 

@@ -7,7 +7,7 @@ namespace Recoverer.Services;
 
 /// <summary>
 /// Async named pipe client that reads newline-delimited JSON events from the engine
-/// and allows sending commands. Reconnects automatically if the engine restarts.
+/// and allows sending commands.
 /// </summary>
 public sealed class PipeClient : IDisposable
 {
@@ -18,6 +18,7 @@ public sealed class PipeClient : IDisposable
     private StreamWriter? _writer;
     private CancellationTokenSource _cts = new();
     private readonly DispatcherQueue _dispatcher;
+    private readonly SemaphoreSlim _sendLock = new(1, 1);
 
     public event Action<EngineEvent>? EventReceived;
     public event Action? Connected;
@@ -52,7 +53,15 @@ public sealed class PipeClient : IDisposable
     public async Task SendAsync(string commandJson)
     {
         if (_writer is null) return;
-        await _writer.WriteLineAsync(commandJson);
+        await _sendLock.WaitAsync();
+        try
+        {
+            await _writer.WriteLineAsync(commandJson);
+        }
+        finally
+        {
+            _sendLock.Release();
+        }
     }
 
     private async Task ReadLoopAsync(CancellationToken ct)
@@ -73,6 +82,7 @@ public sealed class PipeClient : IDisposable
         }
         catch (OperationCanceledException) { }
         catch (IOException) { }
+        catch (ObjectDisposedException) { }
 
         _dispatcher.TryEnqueue(() => Disconnected?.Invoke());
     }
@@ -84,5 +94,6 @@ public sealed class PipeClient : IDisposable
         _reader?.Dispose();
         _pipe?.Dispose();
         _cts.Dispose();
+        _sendLock.Dispose();
     }
 }
