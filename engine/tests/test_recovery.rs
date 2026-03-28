@@ -1,5 +1,4 @@
 use recoverer_engine::recovery::{is_same_volume, build_destination_path, RecoveryOptions};
-use std::path::PathBuf;
 use tempfile::tempdir;
 
 #[test]
@@ -30,7 +29,11 @@ fn build_path_with_structure() {
         "image/jpeg",
         0,
     );
-    assert!(path.to_string_lossy().contains("Recovered"));
+    let s = path.to_string_lossy();
+    // Destination root is present and original path components are reconstructed under it
+    assert!(s.contains("Recovered"), "path missing destination: {s}");
+    assert!(s.contains("Users"), "path missing original dir structure: {s}");
+    assert!(s.ends_with("vacation.jpg"), "path missing filename: {s}");
 }
 
 #[test]
