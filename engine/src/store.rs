@@ -198,6 +198,41 @@ impl Store {
         Ok(())
     }
 
+    pub fn get_file_by_id(&self, id: i64) -> Result<Option<FileRecord>> {
+        let conn = self.conn.lock().unwrap();
+        let mut stmt = conn.prepare(
+            "SELECT id, filename, original_path, mime_type, category, size_bytes, confidence, source, recovery_status, modified_at
+             FROM files WHERE id = ?1"
+        )?;
+        let result = stmt.query_row(rusqlite::params![id], |row| {
+            Ok(FileRecord {
+                id: row.get(0)?,
+                filename: row.get(1)?,
+                original_path: row.get(2)?,
+                mime_type: row.get(3)?,
+                category: row.get(4)?,
+                size_bytes: row.get::<_, i64>(5)? as u64,
+                confidence: row.get::<_, i64>(6)? as u8,
+                source: row.get(7)?,
+                recovery_status: {
+                    let s: String = row.get(8)?;
+                    match s.as_str() {
+                        "recovered" => crate::events::RecoveryStatus::Recovered,
+                        "failed" => crate::events::RecoveryStatus::Failed,
+                        "skipped" => crate::events::RecoveryStatus::Skipped,
+                        _ => crate::events::RecoveryStatus::Pending,
+                    }
+                },
+                modified_at: row.get(9)?,
+            })
+        });
+        match result {
+            Ok(record) => Ok(Some(record)),
+            Err(rusqlite::Error::QueryReturnedNoRows) => Ok(None),
+            Err(e) => Err(crate::error::EngineError::Database(e)),
+        }
+    }
+
     pub fn save_checkpoint(&self, key: &str, value: &str) -> Result<()> {
         self.conn.lock().unwrap().execute(
             "INSERT OR REPLACE INTO scan_checkpoint (key, value) VALUES (?1, ?2)",

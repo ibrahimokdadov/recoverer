@@ -163,36 +163,53 @@ async fn main() {
                 let db = db_path.clone();
 
                 tokio::spawn(async move {
-                    let store = Store::open(&db).unwrap();
+                    let store = match Store::open(&db) {
+                        Ok(s) => s,
+                        Err(e) => {
+                            let _ = etx.send(Event::Error {
+                                code: "DB_ERROR".to_string(),
+                                message: e.to_string(),
+                                fatal: false,
+                            }).await;
+                            return;
+                        }
+                    };
                     let mut recovered = 0u64;
                     let mut warnings = 0u64;
                     let mut failed = 0u64;
 
                     for id in &file_ids {
-                        let offset = (*id as u64).saturating_sub(1) as i64;
-                        let files = store.query_files(None, None, None, offset, 1)
-                            .unwrap_or_default();
+                        match store.get_file_by_id(*id) {
+                            Ok(Some(file)) => {
+                                let _dst_path = recovery::build_destination_path(
+                                    &opts,
+                                    file.filename.as_deref(),
+                                    file.original_path.as_deref(),
+                                    &file.mime_type,
+                                    file.id,
+                                );
 
-                        if let Some(file) = files.first() {
-                            let _dst_path = recovery::build_destination_path(
-                                &opts,
-                                file.filename.as_deref(),
-                                file.original_path.as_deref(),
-                                &file.mime_type,
-                                file.id,
-                            );
-
-                            // TODO: actual cluster-based recovery for v1
-                            match store.update_recovery_status(file.id, RecoveryStatus::Recovered) {
-                                Ok(_) => {
-                                    if file.confidence < 60 { warnings += 1; } else { recovered += 1; }
+                                // TODO: actual cluster-based recovery for v1
+                                match store.update_recovery_status(file.id, RecoveryStatus::Recovered) {
+                                    Ok(_) => {
+                                        if file.confidence < 60 { warnings += 1; } else { recovered += 1; }
+                                    }
+                                    Err(_) => { failed += 1; }
                                 }
-                                Err(_) => { failed += 1; }
-                            }
 
-                            let _ = etx.send(Event::RecoveryProgress {
-                                recovered, warnings, failed, total,
-                            }).await;
+                                let _ = etx.send(Event::RecoveryProgress {
+                                    recovered, warnings, failed, total,
+                                }).await;
+                            }
+                            Ok(None) => {
+                                failed += 1;
+                                let _ = etx.send(Event::RecoveryProgress {
+                                    recovered, warnings, failed, total,
+                                }).await;
+                            }
+                            Err(_) => {
+                                failed += 1;
+                            }
                         }
                     }
 
