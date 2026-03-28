@@ -1,12 +1,12 @@
 // engine/src/scan/volume.rs
 #[cfg(target_os = "windows")]
 use windows::Win32::{
-    Foundation::{CloseHandle, HANDLE, INVALID_HANDLE_VALUE},
+    Foundation::{CloseHandle, HANDLE},
     Storage::FileSystem::{
-        CreateFileW, ReadFile, FILE_FLAGS_AND_ATTRIBUTES, FILE_FLAG_NO_BUFFERING,
-        FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING,
+        CreateFileW, FILE_BEGIN, FILE_FLAGS_AND_ATTRIBUTES, FILE_FLAG_NO_BUFFERING,
+        FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING, ReadFile, SetFilePointerEx,
     },
-    System::IO::{DeviceIoControl, OVERLAPPED},
+    System::IO::DeviceIoControl,
     System::Ioctl::{
         GET_LENGTH_INFORMATION, IOCTL_DISK_GET_LENGTH_INFO, IOCTL_STORAGE_QUERY_PROPERTY,
         PropertyStandardQuery, STORAGE_ACCESS_ALIGNMENT_DESCRIPTOR, STORAGE_PROPERTY_QUERY,
@@ -56,11 +56,12 @@ impl VolumeReader {
         }
         .map_err(|_| EngineError::VolumeAccessDenied(drive.to_string()))?;
 
-        if handle == INVALID_HANDLE_VALUE {
-            return Err(EngineError::VolumeAccessDenied(drive.to_string()));
-        }
+        // No INVALID_HANDLE_VALUE check needed — windows-rs returns Err on failure
 
-        let bytes_per_sector = query_sector_size(handle).unwrap_or(512);
+        let bytes_per_sector = query_sector_size(handle).unwrap_or_else(|| {
+            log::warn!("Could not query sector size for {} — falling back to 512 bytes; may fail on 4Kn drives", drive);
+            512
+        });
         let total_sectors = query_total_sectors(handle, bytes_per_sector);
 
         Ok(Self {
@@ -84,8 +85,10 @@ impl VolumeReader {
     #[cfg(target_os = "windows")]
     pub fn read_sectors(&self, lba: u64, count: u32) -> Result<Vec<u8>> {
         let sector_size = self.bytes_per_sector as usize;
-        let byte_offset = lba * self.bytes_per_sector as u64;
-        let buf_size = sector_size * count as usize;
+        let byte_offset = (lba * self.bytes_per_sector as u64) as i64;
+        let buf_size = sector_size
+            .checked_mul(count as usize)
+            .ok_or_else(|| EngineError::Io(std::io::Error::other("read size overflow")))?;
 
         // Allocate sector-aligned buffer (required for FILE_FLAG_NO_BUFFERING)
         let layout = std::alloc::Layout::from_size_align(buf_size, sector_size)
@@ -95,35 +98,29 @@ impl VolumeReader {
             return Err(EngineError::Io(std::io::Error::other("allocation failed")));
         }
 
-        let mut overlapped = OVERLAPPED::default();
-        overlapped.Anonymous.Anonymous.Offset = byte_offset as u32;
-        overlapped.Anonymous.Anonymous.OffsetHigh = (byte_offset >> 32) as u32;
+        // Position the file pointer using SetFilePointerEx (correct approach for sync handles)
+        let seek_ok = unsafe { SetFilePointerEx(self.handle, byte_offset, None, FILE_BEGIN) };
+        if let Err(e) = seek_ok {
+            unsafe { std::alloc::dealloc(buf_ptr, layout) };
+            return Err(EngineError::Io(std::io::Error::from_raw_os_error(e.code().0)));
+        }
 
+        // Synchronous ReadFile — no OVERLAPPED
+        let buf_slice = unsafe { std::slice::from_raw_parts_mut(buf_ptr, buf_size) };
         let mut bytes_read = 0u32;
-        let buf_slice =
-            unsafe { std::slice::from_raw_parts_mut(buf_ptr, buf_size) };
-
-        let ok = unsafe {
-            ReadFile(
-                self.handle,
-                Some(buf_slice),
-                Some(&mut bytes_read),
-                Some(&mut overlapped),
-            )
+        let read_ok = unsafe {
+            ReadFile(self.handle, Some(buf_slice), Some(&mut bytes_read), None)
         };
 
-        let result = if ok.is_ok() && bytes_read as usize == buf_size {
-            let mut out = vec![0u8; buf_size];
-            unsafe {
-                std::ptr::copy_nonoverlapping(buf_ptr, out.as_mut_ptr(), buf_size);
-            }
+        // Take ownership of the buffer as a Vec to avoid an extra copy
+        if read_ok.is_ok() && bytes_read as usize == buf_size {
+            // SAFETY: buf_ptr was allocated with the global allocator, buf_size bytes are valid
+            let out = unsafe { Vec::from_raw_parts(buf_ptr, buf_size, buf_size) };
             Ok(out)
         } else {
+            unsafe { std::alloc::dealloc(buf_ptr, layout) };
             Err(EngineError::Io(std::io::Error::last_os_error()))
-        };
-
-        unsafe { std::alloc::dealloc(buf_ptr, layout) };
-        result
+        }
     }
 
     #[cfg(not(target_os = "windows"))]
@@ -183,6 +180,7 @@ fn query_total_sectors(handle: HANDLE, bytes_per_sector: u32) -> u64 {
     if ok.is_ok() {
         (info.Length as u64) / bytes_per_sector as u64
     } else {
+        log::warn!("IOCTL_DISK_GET_LENGTH_INFO failed — total_sectors will be 0; scan coverage unknown");
         0
     }
 }
