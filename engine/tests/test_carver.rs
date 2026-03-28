@@ -107,3 +107,12 @@ fn find_webp_with_nonzero_header_offset() {
     assert!(webp.is_some(), "WEBP at header_offset=8 should be found");
     assert_eq!(webp.unwrap().byte_offset, 0);
 }
+
+#[test]
+fn jpeg_footer_yields_estimated_size() {
+    let buf = buffer_with_jpeg_at(0);
+    let results = carve_buffer(&buf, 0);
+    let jpeg = results.iter().find(|r| r.mime_type == "image/jpeg").unwrap();
+    // Header at 0, footer [0xFF, 0xD9] at bytes 100-101 → size = end - start = 102
+    assert_eq!(jpeg.estimated_size, Some(102));
+}

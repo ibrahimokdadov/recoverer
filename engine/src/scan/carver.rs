@@ -26,7 +26,7 @@ pub fn carve_buffer(buf: &[u8], base_offset: u64) -> Vec<CarvingResult> {
         while pos + hoff + header.len() <= buf.len() {
             if buf[pos + hoff..pos + hoff + header.len()] == *header {
                 let estimated_size = sig.footer.and_then(|footer| {
-                    find_footer(buf, pos, footer)
+                    find_footer(buf, pos, footer, sig.max_size)
                         .map(|end| (end - pos) as u64)
                 });
                 results.push(CarvingResult {
@@ -47,12 +47,13 @@ pub fn carve_buffer(buf: &[u8], base_offset: u64) -> Vec<CarvingResult> {
     results
 }
 
-fn find_footer(buf: &[u8], start: usize, footer: &[u8]) -> Option<usize> {
+fn find_footer(buf: &[u8], start: usize, footer: &[u8], max_size: u64) -> Option<usize> {
     if footer.is_empty() { return None; }
     let search_start = start + 1;
-    if search_start + footer.len() > buf.len() { return None; }
+    let search_end = std::cmp::min(buf.len(), start.saturating_add(max_size as usize));
+    if search_start + footer.len() > search_end { return None; }
 
-    for i in search_start..=(buf.len() - footer.len()) {
+    for i in search_start..=(search_end - footer.len()) {
         if &buf[i..i + footer.len()] == footer {
             return Some(i + footer.len());
         }
