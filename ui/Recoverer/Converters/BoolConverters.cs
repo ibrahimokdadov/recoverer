@@ -24,3 +24,18 @@ public class NullToVisibilityConverter : IValueConverter
     public object ConvertBack(object v, Type t, object p, string l) =>
         throw new NotSupportedException();
 }
+
+public class PauseResumeTextConverter : IValueConverter
+{
+    public object Convert(object v, Type t, object p, string l) =>
+        v is bool paused && paused ? "Resume" : "Pause";
+    public object ConvertBack(object v, Type t, object p, string l) =>
+        throw new NotSupportedException();
+}
+
+public class PercentConverter : IValueConverter
+{
+    public object Convert(object v, Type t, object p, string l) => $"{v}%";
+    public object ConvertBack(object v, Type t, object p, string l) =>
+        throw new NotSupportedException();
+}
