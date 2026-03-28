@@ -35,8 +35,8 @@ pub fn parse_boot_sector(sector: &[u8]) -> Result<NtfsBootSector> {
     let bytes_per_sector = u16::from_le_bytes([sector[11], sector[12]]) as u32;
     let sectors_per_cluster = sector[13] as u32;
     let bytes_per_cluster = bytes_per_sector * sectors_per_cluster;
-    let total_sectors = u64::from_le_bytes(sector[40..48].try_into().unwrap());
-    let mft_lcn = i64::from_le_bytes(sector[48..56].try_into().unwrap());
+    let total_sectors = u64::from_le_bytes(sector[40..48].try_into().ok().ok_or(EngineError::NotNtfs)?);
+    let mft_lcn = i64::from_le_bytes(sector[48..56].try_into().ok().ok_or(EngineError::NotNtfs)?);
 
     Ok(NtfsBootSector {
         bytes_per_sector,
@@ -107,9 +107,7 @@ pub fn parse_mft_record(data: &[u8], record_number: u32) -> Option<MftRecord> {
 
         match attr_type {
             0x30 => {
-                // $FILE_NAME attribute — pass full remaining slice so content is not truncated
-                // by a potentially under-counted attr_len in the record header.
-                if let Some((fname, pref, fs, als, cr, mo)) = parse_filename_attr(&data[offset..]) {
+                if let Some((fname, pref, fs, als, cr, mo)) = parse_filename_attr(&data[offset..offset + attr_len]) {
                     if filename.is_none() {
                         filename = Some(fname);
                         parent_ref = Some(pref);
@@ -145,6 +143,7 @@ fn parse_filename_attr(attr: &[u8]) -> Option<(String, u64, u64, u64, Option<i64
     let non_resident = attr[8];
     let content_offset = u16::from_le_bytes([attr[20], attr[21]]) as usize;
 
+    if content_offset > attr.len() { return None; }
     let content = if non_resident == 0 {
         &attr[content_offset..]
     } else {
@@ -195,6 +194,7 @@ fn parse_data_attr_first_cluster(attr: &[u8]) -> Option<u64> {
     let len_bytes = (header & 0x0F) as usize;
     let off_bytes = ((header >> 4) & 0x0F) as usize;
 
+    if off_bytes > 7 { return None; }
     if data_run_offset + 1 + len_bytes + off_bytes > attr.len() { return None; }
 
     // Extract LCN (cluster offset) from the data run
