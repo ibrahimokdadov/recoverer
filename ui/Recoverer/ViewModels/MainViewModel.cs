@@ -30,14 +30,6 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         Pipe.Connected      += () => StatusText = "Engine connected";
     }
 
-    public async Task StartEngineAsync()
-    {
-        Engine.Start();
-        // Give the engine 1.5s to open the pipe before connecting
-        await Task.Delay(1500);
-        await Pipe.ConnectAsync();
-    }
-
     private void OnEvent(EngineEvent ev)
     {
         switch (ev)

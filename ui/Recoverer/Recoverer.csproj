@@ -19,4 +19,17 @@
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.3.2" />
     <PackageReference Include="System.Text.Json" Version="8.0.4" />
   </ItemGroup>
+
+  <PropertyGroup>
+    <!-- Adjust this path if the Rust engine output differs -->
+    <EngineExePath>$(MSBuildThisFileDirectory)..\..\target\x86_64-pc-windows-msvc\release\recoverer-engine.exe</EngineExePath>
+  </PropertyGroup>
+
+  <Target Name="CopyEngine" AfterTargets="Build" Condition="Exists('$(EngineExePath)')">
+    <Copy SourceFiles="$(EngineExePath)"
+          DestinationFolder="$(OutputPath)"
+          SkipUnchangedFiles="true" />
+    <Message Text="Copied recoverer-engine.exe to $(OutputPath)" Importance="High" />
+  </Target>
+
 </Project>

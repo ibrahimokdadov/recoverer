@@ -19,7 +19,13 @@ public partial class App : Application
         MainWindow = new MainWindow(ViewModel);
         MainWindow.Activate();
 
-        // Start the engine asynchronously after the window is shown
-        _ = ViewModel.StartEngineAsync();
+        _ = Task.Run(async () =>
+        {
+            var ok = await Services.EngineBootstrap.StartWithErrorHandlingAsync(
+                ViewModel.Engine, ViewModel.Pipe, MainWindow);
+            if (!ok)
+                DispatcherQueue.GetForCurrentThread().TryEnqueue(
+                    () => ViewModel.StatusText = "Engine offline");
+        });
     }
 }
