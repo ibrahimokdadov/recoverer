@@ -66,6 +66,34 @@ public class EngineEventTests
     }
 
     [Fact]
+    public void PhaseChange_deserializes()
+    {
+        var e = EngineEvent.Deserialize("""{"event":"PhaseChange","new_phase":"carving"}""");
+        var p = Assert.IsType<PhaseChangeEvent>(e);
+        Assert.Equal("carving", p.NewPhase);
+    }
+
+    [Fact]
+    public void RecoveryProgress_deserializes()
+    {
+        var e = EngineEvent.Deserialize(
+            """{"event":"RecoveryProgress","recovered":10,"warnings":1,"failed":2,"total":50}""");
+        var rp = Assert.IsType<RecoveryProgressEvent>(e);
+        Assert.Equal(10UL, rp.Recovered);
+        Assert.Equal(50UL, rp.Total);
+    }
+
+    [Fact]
+    public void RecoveryComplete_deserializes()
+    {
+        var e = EngineEvent.Deserialize(
+            """{"event":"RecoveryComplete","recovered":48,"warnings":2,"failed":0}""");
+        var rc = Assert.IsType<RecoveryCompleteEvent>(e);
+        Assert.Equal(48UL, rc.Recovered);
+        Assert.Equal(0UL, rc.Failed);
+    }
+
+    [Fact]
     public void Unknown_event_returns_null()
     {
         var e = EngineEvent.Deserialize("""{"event":"SomeFutureEvent","data":"x"}""");

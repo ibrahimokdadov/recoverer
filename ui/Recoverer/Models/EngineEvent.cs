@@ -57,6 +57,11 @@ public sealed class PhaseChangeEvent : EngineEvent
     [JsonPropertyName("new_phase")] public string NewPhase { get; init; } = "";
 }
 
+/// <summary>
+/// Emitted during scan when a file is discovered. Does not include recovery_status
+/// (which is only meaningful after recovery). Use <see cref="FileRecord"/> for
+/// post-scan file state from a FilesPage event.
+/// </summary>
 public sealed class FileFoundEvent : EngineEvent
 {
     [JsonPropertyName("id")]            public long    Id           { get; init; }
