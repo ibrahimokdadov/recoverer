@@ -54,3 +54,34 @@ public class CountToBoolConverter : IValueConverter
     public object ConvertBack(object v, Type t, object p, string l) =>
         throw new NotSupportedException();
 }
+
+public class CountToVisibilityConverter : IValueConverter
+{
+    public object Convert(object v, Type t, object p, string l) =>
+        v is int n && n > 0 ? Visibility.Visible : Visibility.Collapsed;
+    public object ConvertBack(object v, Type t, object p, string l) =>
+        throw new NotSupportedException();
+}
+
+public class InverseCountToVisibilityConverter : IValueConverter
+{
+    public object Convert(object v, Type t, object p, string l) =>
+        v is int n && n == 0 ? Visibility.Visible : Visibility.Collapsed;
+    public object ConvertBack(object v, Type t, object p, string l) =>
+        throw new NotSupportedException();
+}
+
+public class CategoryToGlyphConverter : IValueConverter
+{
+    public object Convert(object v, Type t, object p, string l) => (v as string) switch
+    {
+        "Images"    => "\uEB9F",   // Photo
+        "Videos"    => "\uE714",   // Video
+        "Documents" => "\uE8A5",   // Document
+        "Audio"     => "\uE8D6",   // MusicInfo
+        "Archives"  => "\uE8B7",   // ZipFolder
+        _           => "\uE8CF",   // Globe / Other
+    };
+    public object ConvertBack(object v, Type t, object p, string l) =>
+        throw new NotSupportedException();
+}

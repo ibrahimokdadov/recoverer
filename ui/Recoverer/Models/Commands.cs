@@ -3,7 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace Recoverer;
 
-public enum ScanDepth { Quick, Deep }
+public enum ScanDepth { Quick, Deep, CarveOnly }
 
 public static class Commands
 {
@@ -13,19 +13,23 @@ public static class Commands
         Converters = { new JsonStringEnumConverter(JsonNamingPolicy.SnakeCaseLower) }
     };
 
-    public static string Ping() => """{"type":"Ping"}""";
-    public static string PauseScan() => """{"type":"PauseScan"}""";
-    public static string ResumeScan() => """{"type":"ResumeScan"}""";
-    public static string CancelScan() => """{"type":"CancelScan"}""";
+    public static string Ping()          => """{"type":"Ping"}""";
+    public static string PauseScan()    => """{"type":"PauseScan"}""";
+    public static string ResumeScan()   => """{"type":"ResumeScan"}""";
+    public static string CancelScan()   => """{"type":"CancelScan"}""";
+    public static string ListSessions()      => """{"type":"ListSessions"}""";
+    public static string ApplyScanHistory() => """{"type":"ApplyScanHistory"}""";
+    public static string SwitchSession(long sessionId) =>
+        JsonSerializer.Serialize(new SwitchSessionPayload(sessionId), _opts);
 
     public static string StartScan(string drive, ScanDepth depth, IEnumerable<string> categories) =>
         JsonSerializer.Serialize(new StartScanPayload(drive, depth, categories.ToArray()), _opts);
 
     public static string QueryFiles(
         string? category, int? minConfidence, string? nameContains,
-        ulong offset, ulong limit) =>
+        ulong offset, ulong limit, bool excludeRecovered = false, bool collapseFragments = true) =>
         JsonSerializer.Serialize(
-            new QueryFilesPayload(category, minConfidence, nameContains, offset, limit), _opts);
+            new QueryFilesPayload(category, minConfidence, nameContains, offset, limit, excludeRecovered, collapseFragments), _opts);
 
     public static string RecoverFiles(
         IEnumerable<long> fileIds, string destination, bool recreateStructure) =>
@@ -50,11 +54,20 @@ public static class Commands
         int? MinConfidence,
         string? NameContains,
         ulong Offset,
-        ulong Limit)
+        ulong Limit,
+        bool ExcludeRecovered,
+        bool CollapseFragments)
     {
         public QueryFilesPayload(string? category, int? minConfidence, string? nameContains,
-            ulong offset, ulong limit)
-            : this("QueryFiles", category, minConfidence, nameContains, offset, limit) { }
+            ulong offset, ulong limit, bool excludeRecovered, bool collapseFragments)
+            : this("QueryFiles", category, minConfidence, nameContains, offset, limit, excludeRecovered, collapseFragments) { }
+    }
+
+    private sealed record SwitchSessionPayload(
+        [property: JsonPropertyName("type")] string Type,
+        long SessionId)
+    {
+        public SwitchSessionPayload(long sessionId) : this("SwitchSession", sessionId) { }
     }
 
     private sealed record RecoverFilesPayload(

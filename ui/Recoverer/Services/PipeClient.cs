@@ -20,6 +20,8 @@ public sealed class PipeClient : IDisposable
     private readonly DispatcherQueue _dispatcher;
     private readonly SemaphoreSlim _sendLock = new(1, 1);
 
+    public bool IsConnected => _writer is not null;
+
     public event Action<EngineEvent>? EventReceived;
     public event Action? Connected;
     public event Action? Disconnected;
@@ -40,7 +42,7 @@ public sealed class PipeClient : IDisposable
 
         _reader = new StreamReader(_pipe, Encoding.UTF8, detectEncodingFromByteOrderMarks: false,
             bufferSize: 4096, leaveOpen: true);
-        _writer = new StreamWriter(_pipe, Encoding.UTF8, bufferSize: 512, leaveOpen: true)
+        _writer = new StreamWriter(_pipe, new System.Text.UTF8Encoding(false), bufferSize: 512, leaveOpen: true)
         {
             AutoFlush = true,
             NewLine = "\n"

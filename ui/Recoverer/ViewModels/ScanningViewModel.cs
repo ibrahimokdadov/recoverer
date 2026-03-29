@@ -8,6 +8,7 @@ namespace Recoverer.ViewModels;
 public sealed partial class ScanningViewModel : ObservableObject
 {
     private readonly PipeClient _pipe;
+    private ulong _feedEventCounter;
 
     [ObservableProperty] private string _phaseLabel = "Checking Volume Shadow Copies...";
     [ObservableProperty] private byte   _pct;
@@ -40,10 +41,11 @@ public sealed partial class ScanningViewModel : ObservableObject
             case PhaseChangeEvent pc:
                 PhaseLabel = pc.NewPhase switch
                 {
-                    "vss"      => "Checking Volume Shadow Copies...",
-                    "mft_scan" => "Scanning file records...",
-                    "carving"  => "Deep scanning unallocated space...",
-                    _          => pc.NewPhase
+                    "vss"               => "Checking Volume Shadow Copies...",
+                    "mft_scan"          => "Scanning file records...",
+                    "carving"           => "Deep scanning unallocated space...",
+                    "fragment_grouping" => "Grouping fragment chains...",
+                    _                   => pc.NewPhase
                 };
                 break;
 
@@ -57,18 +59,28 @@ public sealed partial class ScanningViewModel : ObservableObject
 
             case FileFoundEvent ff:
                 IncrementCategory(ff.Category);
-                Feed.Insert(0, new DiscoveryItem(
-                    ff.Filename ?? $"[carved file]",
-                    ff.Category,
-                    ff.SizeBytes,
-                    ff.Confidence));
-                // Keep feed at most 200 items for performance
-                if (Feed.Count > 200) Feed.RemoveAt(Feed.Count - 1);
+                // Only update the live feed every 50 events to keep the UI responsive
+                if (++_feedEventCounter % 50 == 0)
+                {
+                    Feed.Insert(0, new DiscoveryItem(
+                        ff.Filename ?? "[carved file]",
+                        ff.Category,
+                        ff.SizeBytes,
+                        ff.Confidence));
+                    if (Feed.Count > 200) Feed.RemoveAt(Feed.Count - 1);
+                }
                 break;
 
             case ScanCompleteEvent sc:
                 PhaseLabel = $"Scan complete — {sc.TotalFound:N0} files found";
                 Pct = 100;
+                // Cross-reference new scan against recovery history so previously
+                // recovered files on this drive show up as recovered immediately.
+                _ = _pipe.SendAsync(Commands.ApplyScanHistory());
+                break;
+
+            case ErrorEvent err:
+                PhaseLabel = $"Engine error ({err.Code}): {err.Message}";
                 break;
         }
     }
@@ -117,6 +129,24 @@ public sealed partial class ScanningViewModel : ObservableObject
     };
 
     public void Detach() => _pipe.EventReceived -= OnEvent;
+
+    public void Reset()
+    {
+        PhaseLabel     = "Checking Volume Shadow Copies...";
+        Pct            = 0;
+        FilesFound     = 0;
+        EtaText        = "";
+        CurrentPath    = "";
+        IsPaused       = false;
+        ImagesCount    = 0;
+        VideosCount    = 0;
+        DocumentsCount = 0;
+        AudioCount     = 0;
+        ArchivesCount  = 0;
+        OtherCount     = 0;
+        _feedEventCounter = 0;
+        Feed.Clear();
+    }
 }
 
 public sealed record DiscoveryItem(string Name, string Category, ulong SizeBytes, byte Confidence);

@@ -1,5 +1,15 @@
 use serde::{Deserialize, Serialize};
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct ScanSession {
+    pub id:          i64,
+    pub name:        String,
+    pub drive:       String,
+    pub db_path:     String,
+    pub created_at:  i64,
+    pub total_files: i64,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "snake_case")]
 pub enum RecoveryStatus {
@@ -56,6 +66,9 @@ pub enum Event {
         files: Vec<FileRecord>,
         total_count: i64,
     },
+    SessionsList {
+        sessions: Vec<ScanSession>,
+    },
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -68,7 +81,9 @@ pub struct FileRecord {
     pub size_bytes: u64,
     pub confidence: u8,
     pub source: String,
-    pub recovery_status: RecoveryStatus,
+    pub recovery_status:   RecoveryStatus,
     /// Unix timestamp (seconds since 1970-01-01 UTC) of the file's last modification.
-    pub modified_at: Option<i64>,
+    pub modified_at:       Option<i64>,
+    /// Non-zero means this file is part of a fragment chain (same video split across extents).
+    pub fragment_group_id: i64,
 }

@@ -12,6 +12,8 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 {
     public PipeClient Pipe { get; }
     public EngineProcess Engine { get; }
+    public ScanningViewModel Scanning { get; }
+    public ResultsViewModel  Results  { get; }
 
     [ObservableProperty] private AppPhase _phase = AppPhase.Setup;
     [ObservableProperty] private string _statusText = "Ready";
@@ -22,8 +24,10 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
 
     public MainViewModel(DispatcherQueue dispatcher)
     {
-        Engine = new EngineProcess();
-        Pipe   = new PipeClient(dispatcher);
+        Engine   = new EngineProcess();
+        Pipe     = new PipeClient(dispatcher);
+        Scanning = new ScanningViewModel(Pipe);
+        Results  = new ResultsViewModel(Pipe);
 
         Pipe.EventReceived  += OnEvent;
         Pipe.Disconnected   += () => StatusText = "Engine disconnected";
@@ -35,9 +39,15 @@ public sealed partial class MainViewModel : ObservableObject, IDisposable
         switch (ev)
         {
             case PhaseChangeEvent pc:
-                if (pc.NewPhase == "mft_scan" || pc.NewPhase == "vss" || pc.NewPhase == "carving")
+                if (pc.NewPhase == "vss")
+                {
+                    Scanning.Reset();
+                    Phase = AppPhase.Scanning;
+                }
+                else if (pc.NewPhase == "mft_scan" || pc.NewPhase == "carving")
                     Phase = AppPhase.Scanning;
                 break;
+            case FileFoundEvent:
             case ScanCompleteEvent:
                 Phase = AppPhase.Results;
                 break;

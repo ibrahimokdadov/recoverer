@@ -12,6 +12,7 @@ public sealed partial class SetupPage : Page
     public SetupPage()
     {
         ViewModel = new SetupViewModel(App.Current.ViewModel.Pipe);
+        ViewModel.ResultsRequested += () => App.Current.ViewModel.Phase = AppPhase.Results;
         InitializeComponent();
     }
 

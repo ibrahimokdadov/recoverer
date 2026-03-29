@@ -1,0 +1,23 @@
+# Rust
+target/
+
+# .NET / WinUI
+bin/
+obj/
+*.user
+.vs/
+
+# Compiled engine binary checked into UI folder
+ui/Recoverer/recoverer-engine.exe
+
+# SQLite databases (may contain personal scan data)
+*.db
+*.db-shm
+*.db-wal
+
+# Internal planning docs
+docs/superpowers/
+
+# OS
+Thumbs.db
+.DS_Store

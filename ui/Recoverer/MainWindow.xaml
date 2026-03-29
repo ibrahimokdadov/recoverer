@@ -5,6 +5,11 @@
     xmlns:local="using:Recoverer"
     Title="Recoverer">
 
+    <!-- Mica: blends window with desktop wallpaper for depth and native feel -->
+    <Window.SystemBackdrop>
+        <MicaBackdrop Kind="Base" />
+    </Window.SystemBackdrop>
+
     <NavigationView x:Name="NavView"
         PaneDisplayMode="Left"
         OpenPaneLength="200"
@@ -14,14 +19,26 @@
         SelectionChanged="NavView_SelectionChanged">
 
         <NavigationView.MenuItems>
-            <NavigationViewItem x:Name="NavSetup" Tag="Setup"
-                Content="Scan Setup" Icon="NewFolder" />
-            <NavigationViewItem x:Name="NavScanning" Tag="Scanning"
-                Content="Scanning" Icon="Sync" IsEnabled="False" />
-            <NavigationViewItem x:Name="NavResults" Tag="Results"
-                Content="Results" Icon="List" IsEnabled="False" />
-            <NavigationViewItem x:Name="NavRecovery" Tag="Recovery"
-                Content="Recovery" Icon="Save" IsEnabled="False" />
+            <NavigationViewItem x:Name="NavSetup" Tag="Setup" Content="Scan Setup">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xEDA2;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem x:Name="NavScanning" Tag="Scanning" Content="Scanning" IsEnabled="False">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE72A;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem x:Name="NavResults" Tag="Results" Content="Results" IsEnabled="False">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE8FD;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
+            <NavigationViewItem x:Name="NavRecovery" Tag="Recovery" Content="Recovery" IsEnabled="False">
+                <NavigationViewItem.Icon>
+                    <FontIcon Glyph="&#xE896;" />
+                </NavigationViewItem.Icon>
+            </NavigationViewItem>
         </NavigationView.MenuItems>
 
         <Frame x:Name="ContentFrame" />

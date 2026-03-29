@@ -16,37 +16,74 @@
         </Grid.RowDefinitions>
 
         <!-- Filter sidebar -->
-        <ScrollViewer Grid.Column="0" Grid.RowSpan="2" Padding="16,16,8,16"
+        <ScrollViewer Grid.Column="0" Grid.RowSpan="2" Padding="14,16,10,16"
                       BorderThickness="0,0,1,0"
                       BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
-            <StackPanel Spacing="12">
-                <TextBlock Text="FILE TYPE" Style="{StaticResource CaptionTextBlockStyle}"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <HyperlinkButton Content="All types" Command="{x:Bind ViewModel.SetFilterCommand}" CommandParameter="{x:Null}" />
-                <HyperlinkButton Content="Images"    Command="{x:Bind ViewModel.SetFilterCommand}" CommandParameter="Images" />
-                <HyperlinkButton Content="Videos"    Command="{x:Bind ViewModel.SetFilterCommand}" CommandParameter="Videos" />
-                <HyperlinkButton Content="Documents" Command="{x:Bind ViewModel.SetFilterCommand}" CommandParameter="Documents" />
-                <HyperlinkButton Content="Audio"     Command="{x:Bind ViewModel.SetFilterCommand}" CommandParameter="Audio" />
-                <HyperlinkButton Content="Archives"  Command="{x:Bind ViewModel.SetFilterCommand}" CommandParameter="Archives" />
+            <StackPanel Spacing="10">
 
-                <TextBlock Text="CONFIDENCE" Style="{StaticResource CaptionTextBlockStyle}"
-                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" Margin="0,8,0,0"/>
-                <HyperlinkButton Content="All" Command="{x:Bind ViewModel.SetConfidenceFilterCommand}" CommandParameter="{x:Null}" />
-                <HyperlinkButton Content="High only (≥80%)" Command="{x:Bind ViewModel.SetConfidenceFilterCommand}" CommandParameter="80" />
-                <HyperlinkButton Content="Good (≥50%)"      Command="{x:Bind ViewModel.SetConfidenceFilterCommand}" CommandParameter="50" />
+                <!-- File type -->
+                <TextBlock Text="FILE TYPE"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           FontWeight="SemiBold" />
+                <StackPanel Spacing="1">
+                    <HyperlinkButton Content="All types"  Command="{x:Bind ViewModel.SetFilterCommand}" CommandParameter="{x:Null}" />
+                    <HyperlinkButton Content="Images"     Command="{x:Bind ViewModel.SetFilterCommand}" CommandParameter="Images" />
+                    <HyperlinkButton Content="Videos"     Command="{x:Bind ViewModel.SetFilterCommand}" CommandParameter="Videos" />
+                    <HyperlinkButton Content="Documents"  Command="{x:Bind ViewModel.SetFilterCommand}" CommandParameter="Documents" />
+                    <HyperlinkButton Content="Audio"      Command="{x:Bind ViewModel.SetFilterCommand}" CommandParameter="Audio" />
+                    <HyperlinkButton Content="Archives"   Command="{x:Bind ViewModel.SetFilterCommand}" CommandParameter="Archives" />
+                </StackPanel>
 
-                <Button Content="Select All High Confidence"
+                <!-- Confidence -->
+                <TextBlock Text="CONFIDENCE"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           FontWeight="SemiBold" Margin="0,6,0,0" />
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <TextBlock Text="Min:" VerticalAlignment="Center"
+                               Style="{StaticResource CaptionTextBlockStyle}" />
+                    <TextBlock VerticalAlignment="Center"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                               FontWeight="SemiBold">
+                        <Run Text="{x:Bind ViewModel.ConfidenceThreshold, Mode=OneWay}" /><Run Text="%" />
+                    </TextBlock>
+                </StackPanel>
+                <Slider Minimum="0" Maximum="100" StepFrequency="5" TickFrequency="25"
+                        TickPlacement="Outside"
+                        Value="{x:Bind ViewModel.ConfidenceThreshold, Mode=TwoWay}" />
+                <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                           TextWrapping="Wrap" FontSize="11">
+                    <Run Text="45" /><Run Text="% header  ·  " />
+                    <Run Text="65" /><Run Text="% footer  ·  " />
+                    <Run Text="75" /><Run Text="% MFT" />
+                </TextBlock>
+
+                <Button Content="Select High Confidence"
                         Command="{x:Bind ViewModel.SelectHighConfidenceCommand}"
-                        Margin="0,8,0,0" />
+                        HorizontalAlignment="Stretch"
+                        Margin="0,4,0,0" />
+
+                <!-- Status -->
+                <TextBlock Text="STATUS"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           FontWeight="SemiBold" Margin="0,8,0,0" />
+                <CheckBox Content="Hide recovered"
+                          IsChecked="{x:Bind ViewModel.HideRecovered, Mode=TwoWay}" />
+                <CheckBox Content="Collapse fragments"
+                          IsChecked="{x:Bind ViewModel.CollapseFragments, Mode=TwoWay}" />
             </StackPanel>
         </ScrollViewer>
 
         <!-- Main results area -->
-        <Grid Grid.Column="1" Grid.Row="0" RowSpacing="8" Margin="16,16,16,0">
+        <Grid Grid.Column="1" Grid.Row="0" RowSpacing="8" Margin="14,14,14,0">
             <Grid.RowDefinitions>
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="*" />
-                <RowDefinition Height="200" />
+                <RowDefinition Height="Auto" />
             </Grid.RowDefinitions>
 
             <!-- Search bar -->
@@ -58,79 +95,143 @@
             <ListView Grid.Row="1" x:Name="FileList"
                       ItemsSource="{x:Bind ViewModel.Files}"
                       SelectionMode="Multiple"
-                      SelectionChanged="FileList_SelectionChanged">
+                      SelectionChanged="FileList_SelectionChanged"
+                      Margin="0,8,0,0">
                 <ListView.Header>
-                    <Grid Padding="4,4,4,4">
+                    <Grid Padding="12,6,12,6">
                         <Grid.ColumnDefinitions>
                             <ColumnDefinition Width="32" />
-                            <ColumnDefinition Width="40" />
                             <ColumnDefinition Width="*" />
-                            <ColumnDefinition Width="80" />
+                            <ColumnDefinition Width="72" />
+                            <ColumnDefinition Width="90" />
                             <ColumnDefinition Width="100" />
-                            <ColumnDefinition Width="80" />
                         </Grid.ColumnDefinitions>
-                        <TextBlock Grid.Column="2" Text="Name" Style="{StaticResource CaptionTextBlockStyle}" />
-                        <TextBlock Grid.Column="3" Text="Size" Style="{StaticResource CaptionTextBlockStyle}" />
-                        <TextBlock Grid.Column="4" Text="Confidence" Style="{StaticResource CaptionTextBlockStyle}" />
-                        <TextBlock Grid.Column="5" Text="Source" Style="{StaticResource CaptionTextBlockStyle}" />
+                        <TextBlock Grid.Column="0" />
+                        <TextBlock Grid.Column="1" Text="Name"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Grid.Column="2" Text="Size"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Grid.Column="3" Text="Confidence"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        <TextBlock Grid.Column="4" Text="Status"
+                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                     </Grid>
                 </ListView.Header>
                 <ListView.ItemTemplate>
                     <DataTemplate x:DataType="local:FileRecord">
-                        <Grid Padding="0,4,0,4">
+                        <Grid Padding="0,5,0,5">
                             <Grid.ColumnDefinitions>
-                                <ColumnDefinition Width="40" />
+                                <ColumnDefinition Width="32" />
                                 <ColumnDefinition Width="*" />
-                                <ColumnDefinition Width="80" />
+                                <ColumnDefinition Width="72" />
+                                <ColumnDefinition Width="90" />
                                 <ColumnDefinition Width="100" />
-                                <ColumnDefinition Width="80" />
                             </Grid.ColumnDefinitions>
-                            <TextBlock Grid.Column="0" Text="{x:Bind Category}"
-                                       Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                            <!-- Category icon -->
+                            <FontIcon Grid.Column="0" FontSize="14" VerticalAlignment="Center"
+                                      Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
+                                      Glyph="{x:Bind Category, Converter={StaticResource CategoryToGlyphConverter}}" />
+                            <!-- Filename -->
                             <TextBlock Grid.Column="1" Text="{x:Bind DisplayName}"
-                                       TextTrimming="CharacterEllipsis" />
-                            <TextBlock Grid.Column="2" Text="{x:Bind SizeBytes,
-                                       Converter={StaticResource FileSizeConverter}}"
-                                       Style="{StaticResource CaptionTextBlockStyle}" />
-                            <ctrl:ConfidenceDots Grid.Column="3"
-                                                 Value="{x:Bind Confidence}" />
-                            <TextBlock Grid.Column="4" Text="{x:Bind Source}"
+                                       TextTrimming="CharacterEllipsis"
+                                       VerticalAlignment="Center" />
+                            <!-- Size -->
+                            <TextBlock Grid.Column="2"
+                                       Text="{x:Bind SizeBytes, Converter={StaticResource FileSizeConverter}}"
                                        Style="{StaticResource CaptionTextBlockStyle}"
-                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       VerticalAlignment="Center" />
+                            <!-- Confidence dots -->
+                            <ctrl:ConfidenceDots Grid.Column="3"
+                                                 Value="{x:Bind Confidence}"
+                                                 VerticalAlignment="Center" />
+                            <!-- Status / fragment badge -->
+                            <StackPanel Grid.Column="4" Orientation="Horizontal" Spacing="4"
+                                        VerticalAlignment="Center">
+                                <Border Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                        CornerRadius="3" Padding="4,1"
+                                        Visibility="{x:Bind IsFragment, Converter={StaticResource BoolToVisConverter}}">
+                                    <TextBlock Text="chain" FontSize="10"
+                                               Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}" />
+                                </Border>
+                                <TextBlock Text="{x:Bind StatusDisplay}"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            </StackPanel>
                         </Grid>
                     </DataTemplate>
                 </ListView.ItemTemplate>
             </ListView>
 
-            <!-- Preview pane (single selection) -->
-            <ctrl:FilePreviewPanel Grid.Row="2"
-                File="{x:Bind ViewModel.PreviewFile, Mode=OneWay}"
-                Visibility="{x:Bind ViewModel.PreviewFile, Mode=OneWay,
-                              Converter={StaticResource NullToVisConverter}}" />
+            <!-- Load More -->
+            <Button Grid.Row="2" HorizontalAlignment="Center" Margin="0,4,0,4"
+                    Command="{x:Bind ViewModel.LoadMoreCommand}"
+                    Visibility="{x:Bind ViewModel.HasMore, Mode=OneWay,
+                                  Converter={StaticResource BoolToVisConverter}}">
+                <StackPanel Orientation="Horizontal" Spacing="4">
+                    <TextBlock Text="Load more" />
+                    <TextBlock Text="(" />
+                    <TextBlock Text="{x:Bind ViewModel.RemainingCount, Mode=OneWay}" />
+                    <TextBlock Text="remaining)" />
+                </StackPanel>
+            </Button>
         </Grid>
 
         <!-- Bottom action bar -->
-        <Grid Grid.Column="1" Grid.Row="1"
-              Background="{ThemeResource LayerFillColorDefaultBrush}"
-              Padding="16,8,16,8" BorderThickness="0,1,0,0"
-              BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <TextBlock Grid.Column="0"
-                       VerticalAlignment="Center">
-                <Run Text="{x:Bind ViewModel.SelectedFiles.Count, Mode=OneWay}" />
-                <Run Text=" of " />
-                <Run Text="{x:Bind ViewModel.TotalCount, Mode=OneWay}" />
-                <Run Text=" files selected" />
-            </TextBlock>
-            <Button Grid.Column="1" Content="Recover Selected →"
-                    Click="RecoverButton_Click"
-                    Style="{StaticResource AccentButtonStyle}"
-                    IsEnabled="{x:Bind ViewModel.SelectedFiles.Count,
-                                 Converter={StaticResource CountToBoolConverter}, Mode=OneWay}" />
-        </Grid>
+        <Border Grid.Column="1" Grid.Row="1"
+                Background="{ThemeResource LayerFillColorDefaultBrush}"
+                Padding="14,10,14,10" BorderThickness="0,1,0,0"
+                BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Selection count -->
+                <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="6"
+                            VerticalAlignment="Center">
+                    <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}">
+                        <Run Text="{x:Bind ViewModel.SelectedFiles.Count, Mode=OneWay}" />
+                        <Run Text=" of " />
+                        <Run Text="{x:Bind ViewModel.TotalCount, Mode=OneWay}" />
+                        <Run Text=" selected" />
+                    </TextBlock>
+                </StackPanel>
+
+                <!-- Recover All -->
+                <Button Grid.Column="1" Margin="0,0,8,0"
+                        Click="RecoverAllButton_Click"
+                        IsEnabled="{x:Bind ViewModel.TotalCount,
+                                     Converter={StaticResource CountToBoolConverter}, Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE896;" FontSize="13" />
+                        <TextBlock>
+                            <Run Text="Recover All" />
+                            <Run Text=" (" />
+                            <Run Text="{x:Bind ViewModel.TotalCount, Mode=OneWay}" />
+                            <Run Text=")" />
+                        </TextBlock>
+                    </StackPanel>
+                </Button>
+
+                <!-- Recover Selected -->
+                <Button Grid.Column="2" Click="RecoverButton_Click"
+                        Style="{StaticResource AccentButtonStyle}"
+                        IsEnabled="{x:Bind ViewModel.SelectedFiles.Count,
+                                     Converter={StaticResource CountToBoolConverter}, Mode=OneWay}">
+                    <StackPanel Orientation="Horizontal" Spacing="6">
+                        <FontIcon Glyph="&#xE896;" FontSize="13" />
+                        <TextBlock Text="Recover Selected" />
+                    </StackPanel>
+                </Button>
+            </Grid>
+        </Border>
     </Grid>
 </Page>

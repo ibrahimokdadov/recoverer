@@ -10,20 +10,6 @@
                 <XamlControlsResources xmlns="using:Microsoft.UI.Xaml.Controls" />
             </ResourceDictionary.MergedDictionaries>
 
-            <!-- ── Override accent color to match brand ──────────────── -->
-            <ResourceDictionary.ThemeDictionaries>
-                <ResourceDictionary x:Key="Default">
-                    <Color x:Key="AccentColor">#3A9FDB</Color>
-                    <SolidColorBrush x:Key="SystemControlHighlightAccentBrush"
-                                     Color="{StaticResource AccentColor}" />
-                </ResourceDictionary>
-                <ResourceDictionary x:Key="Light">
-                    <Color x:Key="AccentColor">#3A9FDB</Color>
-                    <SolidColorBrush x:Key="SystemControlHighlightAccentBrush"
-                                     Color="{StaticResource AccentColor}" />
-                </ResourceDictionary>
-            </ResourceDictionary.ThemeDictionaries>
-
             <!-- ── Converters ─────────────────────────────────────────── -->
             <local:InverseBoolConverter          x:Key="NegBoolConverter" />
             <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVisConverter" />
@@ -32,7 +18,10 @@
             <local:PauseResumeTextConverter      x:Key="PauseResumeTextConverter" />
             <local:PercentConverter              x:Key="PctConverter" />
             <local:FileSizeConverter             x:Key="FileSizeConverter" />
-            <local:CountToBoolConverter          x:Key="CountToBoolConverter" />
+            <local:CountToBoolConverter             x:Key="CountToBoolConverter" />
+            <local:CountToVisibilityConverter        x:Key="CountToBoolToVisConverter" />
+            <local:InverseCountToVisibilityConverter x:Key="CountToInvVisConverter" />
+            <local:CategoryToGlyphConverter         x:Key="CategoryToGlyphConverter" />
 
             <!-- ── Brand colors ──────────────────────────────────────── -->
             <Color x:Key="AccentColor">#3A9FDB</Color>

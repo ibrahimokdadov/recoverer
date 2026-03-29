@@ -3,7 +3,7 @@
 use windows::Win32::{
     Foundation::{CloseHandle, HANDLE},
     Storage::FileSystem::{
-        CreateFileW, FILE_BEGIN, FILE_FLAGS_AND_ATTRIBUTES, FILE_FLAG_NO_BUFFERING,
+        CreateFileW, FILE_BEGIN, FILE_FLAGS_AND_ATTRIBUTES,
         FILE_SHARE_READ, FILE_SHARE_WRITE, OPEN_EXISTING, ReadFile, SetFilePointerEx,
     },
     System::IO::DeviceIoControl,
@@ -50,7 +50,7 @@ impl VolumeReader {
                 FILE_SHARE_READ | FILE_SHARE_WRITE,
                 None,
                 OPEN_EXISTING,
-                FILE_FLAGS_AND_ATTRIBUTES(FILE_FLAG_NO_BUFFERING.0),
+                FILE_FLAGS_AND_ATTRIBUTES(0), // no FILE_FLAG_NO_BUFFERING: compatible with all drive types incl. USB
                 None,
             )
         }
@@ -90,35 +90,23 @@ impl VolumeReader {
             .checked_mul(count as usize)
             .ok_or_else(|| EngineError::Io(std::io::Error::other("read size overflow")))?;
 
-        // Allocate sector-aligned buffer (required for FILE_FLAG_NO_BUFFERING)
-        let layout = std::alloc::Layout::from_size_align(buf_size, sector_size)
-            .map_err(|_| EngineError::Io(std::io::Error::other("alignment error")))?;
-        let buf_ptr = unsafe { std::alloc::alloc(layout) };
-        if buf_ptr.is_null() {
-            return Err(EngineError::Io(std::io::Error::other("allocation failed")));
-        }
+        let mut buf = vec![0u8; buf_size];
 
-        // Position the file pointer using SetFilePointerEx (correct approach for sync handles)
+        // Position the file pointer
         let seek_ok = unsafe { SetFilePointerEx(self.handle, byte_offset, None, FILE_BEGIN) };
         if let Err(e) = seek_ok {
-            unsafe { std::alloc::dealloc(buf_ptr, layout) };
             return Err(EngineError::Io(std::io::Error::from_raw_os_error(e.code().0)));
         }
 
-        // Synchronous ReadFile — no OVERLAPPED
-        let buf_slice = unsafe { std::slice::from_raw_parts_mut(buf_ptr, buf_size) };
+        // Synchronous ReadFile
         let mut bytes_read = 0u32;
         let read_ok = unsafe {
-            ReadFile(self.handle, Some(buf_slice), Some(&mut bytes_read), None)
+            ReadFile(self.handle, Some(buf.as_mut_slice()), Some(&mut bytes_read), None)
         };
 
-        // Take ownership of the buffer as a Vec to avoid an extra copy
         if read_ok.is_ok() && bytes_read as usize == buf_size {
-            // SAFETY: buf_ptr was allocated with the global allocator, buf_size bytes are valid
-            let out = unsafe { Vec::from_raw_parts(buf_ptr, buf_size, buf_size) };
-            Ok(out)
+            Ok(buf)
         } else {
-            unsafe { std::alloc::dealloc(buf_ptr, layout) };
             Err(EngineError::Io(std::io::Error::last_os_error()))
         }
     }

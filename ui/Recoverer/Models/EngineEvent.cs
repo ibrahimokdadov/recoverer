@@ -33,6 +33,7 @@ public abstract class EngineEvent
                 "RecoveryComplete" => JsonSerializer.Deserialize<RecoveryCompleteEvent>(raw, _opts),
                 "Error"            => JsonSerializer.Deserialize<ErrorEvent>(raw, _opts),
                 "FilesPage"        => JsonSerializer.Deserialize<FilesPageEvent>(raw, _opts),
+                "SessionsList"     => JsonSerializer.Deserialize<SessionsListEvent>(raw, _opts),
                 _                  => null
             };
         }
@@ -108,6 +109,27 @@ public sealed class FilesPageEvent : EngineEvent
     [JsonPropertyName("total_count")] public long         TotalCount { get; init; }
 }
 
+public sealed class SessionsListEvent : EngineEvent
+{
+    [JsonPropertyName("sessions")] public ScanSession[] Sessions { get; init; } = [];
+}
+
+public sealed class ScanSession
+{
+    [JsonPropertyName("id")]          public long   Id         { get; init; }
+    [JsonPropertyName("name")]        public string Name       { get; init; } = "";
+    [JsonPropertyName("drive")]       public string Drive      { get; init; } = "";
+    [JsonPropertyName("db_path")]     public string DbPath     { get; init; } = "";
+    [JsonPropertyName("created_at")]  public long   CreatedAt  { get; init; }
+    [JsonPropertyName("total_files")] public long   TotalFiles { get; init; }
+
+    public string DisplayDate =>
+        DateTimeOffset.FromUnixTimeSeconds(CreatedAt).LocalDateTime.ToString("MMM d, yyyy  HH:mm");
+
+    public string DisplayName =>
+        $"{Drive} drive  ·  {TotalFiles:N0} files  ·  {DisplayDate}";
+}
+
 // ── FileRecord ─────────────────────────────────────────────────────────────
 
 public enum RecoveryStatus { Pending, Recovered, Failed, Skipped }
@@ -122,8 +144,13 @@ public sealed class FileRecord
     [JsonPropertyName("size_bytes")]      public ulong          SizeBytes      { get; init; }
     [JsonPropertyName("confidence")]      public byte           Confidence     { get; init; }
     [JsonPropertyName("source")]          public string         Source         { get; init; } = "";
-    [JsonPropertyName("recovery_status")] public RecoveryStatus RecoveryStatus { get; init; }
-    [JsonPropertyName("modified_at")]     public long?          ModifiedAt     { get; init; }
+    [JsonPropertyName("recovery_status")]   public RecoveryStatus RecoveryStatus  { get; init; }
+    [JsonPropertyName("modified_at")]       public long?          ModifiedAt      { get; init; }
+    [JsonPropertyName("fragment_group_id")] public long           FragmentGroupId { get; init; }
 
-    public string DisplayName => Filename ?? $"[carved file #{Id}]";
+    public string DisplayName    => Filename ?? $"[carved file #{Id}]";
+    public bool   IsFragment     => FragmentGroupId > 0;
+    public string StatusDisplay  => RecoveryStatus == RecoveryStatus.Recovered
+        ? "✓ Recovered"
+        : IsFragment ? $"chain #{FragmentGroupId}" : Source;
 }

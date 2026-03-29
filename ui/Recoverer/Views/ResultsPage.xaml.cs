@@ -12,8 +12,14 @@ public sealed partial class ResultsPage : Page
 
     public ResultsPage()
     {
-        ViewModel = new ResultsViewModel(App.Current.ViewModel.Pipe);
+        ViewModel = App.Current.ViewModel.Results;
         InitializeComponent();
+    }
+
+    protected override void OnNavigatedTo(NavigationEventArgs e)
+    {
+        base.OnNavigatedTo(e);
+        ViewModel.ResetAndReload();
     }
 
     protected override void OnNavigatedFrom(NavigationEventArgs e)
@@ -22,7 +28,6 @@ public sealed partial class ResultsPage : Page
         _searchDebounce?.Cancel();
         _searchDebounce?.Dispose();
         _searchDebounce = null;
-        ViewModel.Detach();
     }
 
     private async void SearchBox_TextChanged(object sender, TextChangedEventArgs e)
@@ -51,8 +56,14 @@ public sealed partial class ResultsPage : Page
 
     private void RecoverButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
     {
-        // Navigate to Recovery screen and pass selected files
         var win = App.Current.MainWindow!;
         win.NavigateToRecovery(ViewModel.SelectedFiles.ToList());
+    }
+
+    private async void RecoverAllButton_Click(object sender, Microsoft.UI.Xaml.RoutedEventArgs e)
+    {
+        var all = await ViewModel.FetchAllFilteredAsync();
+        if (all.Count == 0) return;
+        App.Current.MainWindow!.NavigateToRecovery(all);
     }
 }

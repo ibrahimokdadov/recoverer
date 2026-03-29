@@ -114,7 +114,18 @@ fn mime_to_extension(mime: &str) -> &'static str {
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document" => ".docx",
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" => ".xlsx",
         "application/vnd.openxmlformats-officedocument.presentationml.presentation" => ".pptx",
-        _ => ".bin",
+        "video/mpeg"     => ".mpg",
+        "video/x-flv"    => ".flv",
+        "video/webm"     => ".webm",
+        "video/x-ms-wmv" => ".wmv",
+        "video/3gpp"     => ".3gp",
+        "video/ts"       => ".ts",
+        _ => {
+            if mime.starts_with("video/")       { ".mp4" }
+            else if mime.starts_with("audio/")  { ".mp3" }
+            else if mime.starts_with("image/")  { ".jpg" }
+            else                                { ".bin" }
+        }
     }
 }
 

@@ -2,7 +2,8 @@
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
 
-    <Grid Margin="32,24,32,24" MaxWidth="600" RowSpacing="20">
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <Grid Margin="32,24,32,32" MaxWidth="600" RowSpacing="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -22,55 +23,112 @@
         <StackPanel Grid.Row="1" Spacing="8">
             <TextBlock Text="DESTINATION FOLDER"
                        Style="{StaticResource CaptionTextBlockStyle}"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-            <Grid ColumnSpacing="8">
-                <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="Auto" />
-                </Grid.ColumnDefinitions>
-                <TextBox Grid.Column="0"
-                         Text="{x:Bind ViewModel.Destination, Mode=TwoWay}"
-                         PlaceholderText="D:\Recovered Files" />
-                <Button Grid.Column="1" Content="Browse"
-                        Click="BrowseDestination_Click" />
-            </Grid>
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       FontWeight="SemiBold" />
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="14,12">
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+                    <TextBox Grid.Column="0"
+                             Text="{x:Bind ViewModel.Destination, Mode=TwoWay}"
+                             PlaceholderText="D:\Recovered Files"
+                             BorderThickness="0" Background="Transparent" />
+                    <Button Grid.Column="1" Content="Browse"
+                            Click="BrowseDestination_Click" />
+                </Grid>
+            </Border>
         </StackPanel>
 
         <!-- Options -->
         <StackPanel Grid.Row="2" Spacing="8">
             <TextBlock Text="OPTIONS"
                        Style="{StaticResource CaptionTextBlockStyle}"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       FontWeight="SemiBold" />
             <CheckBox Content="Recreate original folder structure"
                       IsChecked="{x:Bind ViewModel.RecreateStructure, Mode=TwoWay}" />
         </StackPanel>
 
         <!-- File summary -->
-        <TextBlock Grid.Row="3">
-            <Run Text="{x:Bind ViewModel.Total, Mode=OneWay}" />
-            <Run Text=" files selected for recovery" />
-        </TextBlock>
+        <Border Grid.Row="3"
+                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                BorderThickness="1" CornerRadius="8" Padding="14,12">
+            <StackPanel Orientation="Horizontal" Spacing="8">
+                <FontIcon Glyph="&#xE8FD;" FontSize="16"
+                          Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                <TextBlock VerticalAlignment="Center">
+                    <Run Text="{x:Bind ViewModel.Total, Mode=OneWay}" FontWeight="SemiBold" />
+                    <Run Text=" files selected for recovery" />
+                </TextBlock>
+            </StackPanel>
+        </Border>
 
         <!-- Progress / Result -->
-        <StackPanel Grid.Row="4" Spacing="12">
+        <StackPanel Grid.Row="4" Spacing="16">
 
             <!-- In-progress -->
             <StackPanel Visibility="{x:Bind ViewModel.IsRecovering, Mode=OneWay,
                                       Converter={StaticResource BoolToVisConverter}}"
-                        Spacing="8">
+                        Spacing="12">
                 <ProgressBar Maximum="100"
                              Value="{x:Bind ViewModel.ProgressPct, Mode=OneWay}" />
-                <StackPanel Orientation="Horizontal" Spacing="16">
-                    <TextBlock Foreground="#3DB87A">
-                        <Run Text="&#x2713; " /><Run Text="{x:Bind ViewModel.Recovered, Mode=OneWay}" />
-                    </TextBlock>
-                    <TextBlock Foreground="#E0A020">
-                        <Run Text="&#x26A0; " /><Run Text="{x:Bind ViewModel.Warnings, Mode=OneWay}" />
-                    </TextBlock>
-                    <TextBlock Foreground="#D95858">
-                        <Run Text="&#x2715; " /><Run Text="{x:Bind ViewModel.Failed, Mode=OneWay}" />
-                    </TextBlock>
-                </StackPanel>
+
+                <!-- Stat cards -->
+                <Grid ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <Border Grid.Column="0" CornerRadius="8" Padding="14,10"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Bind ViewModel.Recovered, Mode=OneWay}"
+                                       FontSize="28" FontWeight="Bold"
+                                       Foreground="#3DB87A" />
+                            <TextBlock Text="Recovered"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="1" CornerRadius="8" Padding="14,10"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Bind ViewModel.Warnings, Mode=OneWay}"
+                                       FontSize="28" FontWeight="Bold"
+                                       Foreground="#E0A020" />
+                            <TextBlock Text="Low confidence"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Grid.Column="2" CornerRadius="8" Padding="14,10"
+                            Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                            BorderThickness="1">
+                        <StackPanel Spacing="2">
+                            <TextBlock Text="{x:Bind ViewModel.Failed, Mode=OneWay}"
+                                       FontSize="28" FontWeight="Bold"
+                                       Foreground="#D95858" />
+                            <TextBlock Text="Failed"
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
                 <Button Content="Cancel Remaining"
                         Command="{x:Bind ViewModel.CancelRecoveryCommand}" />
             </StackPanel>
@@ -78,27 +136,61 @@
             <!-- Complete -->
             <StackPanel Visibility="{x:Bind ViewModel.IsComplete, Mode=OneWay,
                                       Converter={StaticResource BoolToVisConverter}}"
-                        Spacing="8">
-                <TextBlock Style="{StaticResource SubtitleTextBlockStyle}">
-                    <Run Text="&#x2713; " Foreground="#3DB87A" />
-                    <Run Text="{x:Bind ViewModel.Recovered, Mode=OneWay}" />
-                    <Run Text=" recovered" />
-                </TextBlock>
+                        Spacing="16">
+                <Border CornerRadius="8" Padding="20,16"
+                        Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                        BorderThickness="1">
+                    <StackPanel Spacing="6">
+                        <StackPanel Orientation="Horizontal" Spacing="10">
+                            <FontIcon Glyph="&#xE73E;" FontSize="22" Foreground="#3DB87A" />
+                            <TextBlock Style="{StaticResource SubtitleTextBlockStyle}">
+                                <Run Text="{x:Bind ViewModel.Recovered, Mode=OneWay}" FontWeight="Bold" />
+                                <Run Text=" files recovered" />
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" Spacing="20" Margin="0,4,0,0">
+                            <TextBlock Foreground="#E0A020" Style="{StaticResource CaptionTextBlockStyle}">
+                                <Run Text="{x:Bind ViewModel.Warnings, Mode=OneWay}" />
+                                <Run Text=" low confidence" />
+                            </TextBlock>
+                            <TextBlock Foreground="#D95858" Style="{StaticResource CaptionTextBlockStyle}">
+                                <Run Text="{x:Bind ViewModel.Failed, Mode=OneWay}" />
+                                <Run Text=" failed" />
+                            </TextBlock>
+                        </StackPanel>
+                    </StackPanel>
+                </Border>
+
                 <StackPanel Orientation="Horizontal" Spacing="8">
-                    <Button Content="View in File Explorer"
-                            Click="OpenExplorer_Click" />
-                    <Button Content="Scan Again"
-                            Click="ScanAgain_Click" />
+                    <Button Click="OpenExplorer_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xEC50;" FontSize="14" />
+                            <TextBlock Text="View in Explorer" />
+                        </StackPanel>
+                    </Button>
+                    <Button Click="ScanAgain_Click">
+                        <StackPanel Orientation="Horizontal" Spacing="6">
+                            <FontIcon Glyph="&#xE72A;" FontSize="14" />
+                            <TextBlock Text="Scan Again" />
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </StackPanel>
 
-            <!-- Start button (shown when not in progress or complete) -->
-            <Button Content="Start Recovery &#x2192;"
-                    Command="{x:Bind ViewModel.StartRecoveryCommand}"
+            <!-- Start button -->
+            <Button Command="{x:Bind ViewModel.StartRecoveryCommand}"
                     Style="{StaticResource AccentButtonStyle}"
                     HorizontalAlignment="Right"
+                    Padding="20,10"
                     Visibility="{x:Bind ViewModel.CanStartRecovery, Mode=OneWay,
-                                  Converter={StaticResource BoolToVisConverter}}" />
+                                  Converter={StaticResource BoolToVisConverter}}">
+                <StackPanel Orientation="Horizontal" Spacing="8">
+                    <FontIcon Glyph="&#xE896;" FontSize="14" />
+                    <TextBlock Text="Start Recovery" />
+                </StackPanel>
+            </Button>
         </StackPanel>
     </Grid>
+    </ScrollViewer>
 </Page>

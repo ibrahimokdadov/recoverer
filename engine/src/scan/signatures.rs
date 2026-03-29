@@ -47,19 +47,29 @@ pub static SIGNATURES: &[Signature] = &[
     Signature { mime_type: "video/mp4",
         header: b"ftyp", header_offset: 4,
         footer: None, max_size: 10 * 1024 * 1024 * 1024 },
-    // WAV: match on "WAVE" marker at bytes 8-11 (before AVI/RIFF entry so dedup picks WAV first)
+    // AVI: secondary check on "AVI " at offset 8 avoids false-positives from other RIFF types
+    Signature { mime_type: "video/x-msvideo",
+        header: b"AVI ", header_offset: 8,
+        footer: None, max_size: 5 * 1024 * 1024 * 1024 },
+    // WAV: match on "WAVE" at bytes 8-11
     Signature { mime_type: "audio/wav",
         header: b"WAVE", header_offset: 8,
         footer: None, max_size: 2 * 1024 * 1024 * 1024 },
-    Signature { mime_type: "video/x-msvideo",
-        header: b"RIFF", header_offset: 0,
-        footer: None, max_size: 5 * 1024 * 1024 * 1024 },
+    // MKV/WebM share the same EBML magic; both are video
     Signature { mime_type: "video/x-matroska",
         header: &[0x1A, 0x45, 0xDF, 0xA3], header_offset: 0,
         footer: None, max_size: 50 * 1024 * 1024 * 1024 },
     Signature { mime_type: "video/x-ms-wmv",
         header: &[0x30, 0x26, 0xB2, 0x75, 0x8E, 0x66, 0xCF, 0x11], header_offset: 0,
         footer: None, max_size: 10 * 1024 * 1024 * 1024 },
+    // MPEG-2 Program Stream (VOB, MPEG)
+    Signature { mime_type: "video/mpeg",
+        header: &[0x00, 0x00, 0x01, 0xBA], header_offset: 0,
+        footer: None, max_size: 10 * 1024 * 1024 * 1024 },
+    // FLV (Flash Video)
+    Signature { mime_type: "video/x-flv",
+        header: &[0x46, 0x4C, 0x56, 0x01], header_offset: 0,
+        footer: None, max_size: 5 * 1024 * 1024 * 1024 },
     // Audio
     Signature { mime_type: "audio/mpeg",
         header: b"ID3", header_offset: 0,

@@ -4,34 +4,48 @@
       xmlns:vm="using:Recoverer.ViewModels"
       xmlns:local="using:Recoverer.Controls">
 
-    <Grid Margin="32,24,32,24" ColumnSpacing="24">
+    <Grid Margin="32,24,32,24" ColumnSpacing="32">
         <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
-            <ColumnDefinition Width="220" />
+            <ColumnDefinition Width="200" />
         </Grid.ColumnDefinitions>
 
         <!-- Left: progress + live feed -->
-        <StackPanel Grid.Column="0" Spacing="16">
+        <StackPanel Grid.Column="0" Spacing="0">
 
             <!-- Phase label -->
             <TextBlock Text="{x:Bind ViewModel.PhaseLabel, Mode=OneWay}"
-                       Style="{StaticResource SubtitleTextBlockStyle}" />
+                       Style="{StaticResource TitleTextBlockStyle}"
+                       TextWrapping="Wrap"
+                       Margin="0,0,0,20" />
 
-            <!-- Progress bar + ETA -->
-            <ProgressBar Value="{x:Bind ViewModel.Pct, Mode=OneWay}" Maximum="100" />
-            <StackPanel Orientation="Horizontal" Spacing="16">
+            <!-- Big file count -->
+            <StackPanel Orientation="Horizontal" Spacing="12" VerticalAlignment="Bottom"
+                        Margin="0,0,0,4">
+                <TextBlock Text="{x:Bind ViewModel.FilesFound, Mode=OneWay}"
+                           FontSize="52" FontWeight="Bold" LineHeight="52"
+                           Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                <TextBlock Text="files found" VerticalAlignment="Bottom"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                           Margin="0,0,0,6" />
+            </StackPanel>
+
+            <!-- Progress bar -->
+            <ProgressBar Value="{x:Bind ViewModel.Pct, Mode=OneWay}" Maximum="100"
+                         Margin="0,12,0,6" />
+
+            <!-- Pct + ETA -->
+            <StackPanel Orientation="Horizontal" Spacing="16" Margin="0,0,0,16">
                 <TextBlock Text="{x:Bind ViewModel.Pct, Mode=OneWay, Converter={StaticResource PctConverter}}"
+                           Style="{StaticResource CaptionTextBlockStyle}"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
                 <TextBlock Text="{x:Bind ViewModel.EtaText, Mode=OneWay}"
+                           Style="{StaticResource CaptionTextBlockStyle}"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <TextBlock Foreground="{ThemeResource TextFillColorSecondaryBrush}">
-                    <Run Text="{x:Bind ViewModel.FilesFound, Mode=OneWay}" />
-                    <Run Text=" files found" />
-                </TextBlock>
             </StackPanel>
 
             <!-- Pause/Cancel buttons -->
-            <StackPanel Orientation="Horizontal" Spacing="8">
+            <StackPanel Orientation="Horizontal" Spacing="8" Margin="0,0,0,24">
                 <Button Content="{x:Bind ViewModel.IsPaused, Mode=OneWay,
                                   Converter={StaticResource PauseResumeTextConverter}}"
                         Command="{x:Bind ViewModel.PauseResumeCommand}" />
@@ -39,34 +53,70 @@
             </StackPanel>
 
             <!-- Live discovery feed -->
-            <TextBlock Text="DISCOVERED FILES" Style="{StaticResource CaptionTextBlockStyle}"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-            <ListView x:Name="FeedList"
-                      ItemsSource="{x:Bind ViewModel.Feed}"
-                      Height="300"
-                      SelectionMode="None">
-                <ListView.ItemTemplate>
-                    <DataTemplate x:DataType="vm:DiscoveryItem">
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <TextBlock Text="{x:Bind Category}"
-                                       Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}"
-                                       Width="80" />
-                            <TextBlock Text="{x:Bind Name}" TextTrimming="CharacterEllipsis" />
-                        </StackPanel>
-                    </DataTemplate>
-                </ListView.ItemTemplate>
-            </ListView>
+            <TextBlock Text="LIVE DISCOVERY"
+                       Style="{StaticResource CaptionTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       FontWeight="SemiBold"
+                       Margin="0,0,0,6" />
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8">
+                <ListView x:Name="FeedList"
+                          ItemsSource="{x:Bind ViewModel.Feed}"
+                          Height="260"
+                          SelectionMode="None"
+                          Padding="4">
+                    <ListView.ItemTemplate>
+                        <DataTemplate x:DataType="vm:DiscoveryItem">
+                            <Grid Padding="4,2">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="88" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="{x:Bind Category}"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                <TextBlock Grid.Column="1" Text="{x:Bind Name}"
+                                           Style="{StaticResource CaptionTextBlockStyle}"
+                                           TextTrimming="CharacterEllipsis" />
+                            </Grid>
+                        </DataTemplate>
+                    </ListView.ItemTemplate>
+                </ListView>
+            </Border>
         </StackPanel>
 
         <!-- Right: category breakdown -->
-        <StackPanel Grid.Column="1" Spacing="12">
-            <TextBlock Text="BY TYPE" Style="{StaticResource CaptionTextBlockStyle}"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-            <local:CategoryRow Label="Images"    Count="{x:Bind ViewModel.ImagesCount, Mode=OneWay}"    Total="{x:Bind ViewModel.FilesFound, Mode=OneWay}" />
-            <local:CategoryRow Label="Videos"    Count="{x:Bind ViewModel.VideosCount, Mode=OneWay}"    Total="{x:Bind ViewModel.FilesFound, Mode=OneWay}" />
-            <local:CategoryRow Label="Documents" Count="{x:Bind ViewModel.DocumentsCount, Mode=OneWay}" Total="{x:Bind ViewModel.FilesFound, Mode=OneWay}" />
-            <local:CategoryRow Label="Audio"     Count="{x:Bind ViewModel.AudioCount, Mode=OneWay}"     Total="{x:Bind ViewModel.FilesFound, Mode=OneWay}" />
-            <local:CategoryRow Label="Archives"  Count="{x:Bind ViewModel.ArchivesCount, Mode=OneWay}"  Total="{x:Bind ViewModel.FilesFound, Mode=OneWay}" />
+        <StackPanel Grid.Column="1" Spacing="16" Margin="0,56,0,0">
+            <TextBlock Text="BY TYPE"
+                       Style="{StaticResource CaptionTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                       FontWeight="SemiBold" />
+
+            <Border Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="1" CornerRadius="8" Padding="14,12">
+                <StackPanel Spacing="14">
+                    <local:CategoryRow Label="Images"
+                                       Count="{x:Bind ViewModel.ImagesCount, Mode=OneWay}"
+                                       Total="{x:Bind ViewModel.FilesFound, Mode=OneWay}" />
+                    <local:CategoryRow Label="Videos"
+                                       Count="{x:Bind ViewModel.VideosCount, Mode=OneWay}"
+                                       Total="{x:Bind ViewModel.FilesFound, Mode=OneWay}" />
+                    <local:CategoryRow Label="Documents"
+                                       Count="{x:Bind ViewModel.DocumentsCount, Mode=OneWay}"
+                                       Total="{x:Bind ViewModel.FilesFound, Mode=OneWay}" />
+                    <local:CategoryRow Label="Audio"
+                                       Count="{x:Bind ViewModel.AudioCount, Mode=OneWay}"
+                                       Total="{x:Bind ViewModel.FilesFound, Mode=OneWay}" />
+                    <local:CategoryRow Label="Archives"
+                                       Count="{x:Bind ViewModel.ArchivesCount, Mode=OneWay}"
+                                       Total="{x:Bind ViewModel.FilesFound, Mode=OneWay}" />
+                    <local:CategoryRow Label="Other"
+                                       Count="{x:Bind ViewModel.OtherCount, Mode=OneWay}"
+                                       Total="{x:Bind ViewModel.FilesFound, Mode=OneWay}" />
+                </StackPanel>
+            </Border>
         </StackPanel>
     </Grid>
 </Page>
