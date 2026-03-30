@@ -1,0 +1,1088 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Recoverer — File Recovery That Actually Works</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800;900&family=Barlow:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+/* ── Reset & Base ─────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg:         #07080A;
+  --surface:    #0C0F14;
+  --card:       #111520;
+  --card-hover: #161C2A;
+  --border:     #1A2030;
+  --border-hi:  #273040;
+  --accent:     #E8900A;
+  --accent-dim: rgba(232,144,10,.12);
+  --accent-glow:rgba(232,144,10,.25);
+  --green:      #2DBF6E;
+  --red:        #D44F4F;
+  --blue:       #3A9FDB;
+  --text:       #DDE2EC;
+  --text-sec:   #68748A;
+  --text-ter:   #323C50;
+  --mono: 'JetBrains Mono', monospace;
+  --sans: 'Barlow', sans-serif;
+  --cond: 'Barlow Condensed', sans-serif;
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 16px;
+  line-height: 1.6;
+  overflow-x: hidden;
+}
+
+/* ── Noise overlay ─────────────────────────────────────────── */
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 1000;
+  opacity: .4;
+}
+
+/* ── Typography ─────────────────────────────────────────── */
+h1, h2, h3 { font-family: var(--cond); line-height: 1.05; }
+h1 { font-size: clamp(56px, 10vw, 110px); font-weight: 900; letter-spacing: -1px; }
+h2 { font-size: clamp(36px, 5vw, 56px); font-weight: 800; }
+h3 { font-size: clamp(20px, 2.5vw, 26px); font-weight: 700; }
+.mono { font-family: var(--mono); }
+
+/* ── Navigation ─────────────────────────────────────────── */
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 18px 48px;
+  background: rgba(7,8,10,.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav-logo {
+  font-family: var(--cond);
+  font-size: 22px; font-weight: 800;
+  letter-spacing: 2px;
+  color: var(--text);
+  text-decoration: none;
+  text-transform: uppercase;
+}
+
+.nav-logo span { color: var(--accent); }
+
+.nav-links { display: flex; align-items: center; gap: 32px; }
+.nav-links a {
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
+  color: var(--text-sec); text-decoration: none; letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: color .2s;
+}
+.nav-links a:hover { color: var(--text); }
+
+.btn-github {
+  display: flex; align-items: center; gap: 8px;
+  padding: 9px 18px;
+  background: var(--card);
+  border: 1px solid var(--border-hi);
+  border-radius: 6px;
+  font-family: var(--mono); font-size: 12px; font-weight: 500;
+  color: var(--text); text-decoration: none; letter-spacing: .5px;
+  transition: border-color .2s, background .2s;
+}
+.btn-github:hover {
+  border-color: var(--accent);
+  background: var(--accent-dim);
+  color: var(--accent);
+}
+
+.btn-github svg { width: 16px; height: 16px; }
+
+/* ── Hero ─────────────────────────────────────────── */
+#hero {
+  position: relative;
+  min-height: 100vh;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 140px 48px 80px;
+  overflow: hidden;
+}
+
+#sector-canvas {
+  position: absolute;
+  inset: 0;
+  opacity: .55;
+}
+
+.hero-content {
+  position: relative; z-index: 2;
+  max-width: 900px;
+}
+
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 6px 14px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(232,144,10,.3);
+  border-radius: 4px;
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  color: var(--accent); letter-spacing: 1.5px;
+  text-transform: uppercase;
+  margin-bottom: 28px;
+}
+
+.hero-eyebrow::before {
+  content: '';
+  width: 6px; height: 6px;
+  background: var(--accent);
+  border-radius: 50%;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: .4; transform: scale(.7); }
+}
+
+.hero-title { margin-bottom: 24px; }
+.hero-title .line1 { display: block; color: var(--text); }
+.hero-title .line2 { display: block; color: var(--accent); }
+
+.hero-sub {
+  font-size: clamp(16px, 2vw, 20px);
+  color: var(--text-sec);
+  max-width: 560px;
+  margin-bottom: 48px;
+  line-height: 1.65;
+}
+
+.hero-sub strong { color: var(--text); font-weight: 600; }
+
+.hero-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 14px 32px;
+  background: var(--accent);
+  color: #07080A;
+  font-family: var(--cond); font-size: 18px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase;
+  text-decoration: none; border-radius: 6px;
+  transition: transform .15s, box-shadow .15s;
+  box-shadow: 0 0 32px var(--accent-glow);
+}
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 48px var(--accent-glow);
+}
+
+.btn-secondary {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 28px;
+  background: transparent;
+  border: 1px solid var(--border-hi);
+  color: var(--text-sec);
+  font-family: var(--cond); font-size: 18px; font-weight: 600;
+  letter-spacing: 1px; text-transform: uppercase;
+  text-decoration: none; border-radius: 6px;
+  transition: border-color .2s, color .2s;
+}
+.btn-secondary:hover { border-color: var(--text-sec); color: var(--text); }
+
+.hero-stats {
+  position: relative; z-index: 2;
+  display: flex; gap: 48px; margin-top: 80px;
+  padding-top: 40px;
+  border-top: 1px solid var(--border);
+  flex-wrap: wrap;
+}
+
+.stat-item {}
+.stat-num {
+  font-family: var(--cond); font-size: 42px; font-weight: 900;
+  color: var(--accent); line-height: 1;
+}
+.stat-label {
+  font-family: var(--mono); font-size: 11px; font-weight: 500;
+  color: var(--text-sec); letter-spacing: 1px;
+  text-transform: uppercase; margin-top: 4px;
+}
+
+/* ── Problem section ─────────────────────────────── */
+#problem {
+  padding: 100px 48px;
+  border-top: 1px solid var(--border);
+  position: relative;
+}
+
+.problem-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
+  max-width: 1100px; margin: 60px auto 0;
+}
+
+.problem-col {
+  padding: 40px 48px;
+  background: var(--surface);
+}
+
+.problem-col:first-child {
+  border-right: 2px solid var(--border);
+}
+
+.problem-col-label {
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 24px;
+  padding: 4px 10px;
+  display: inline-block;
+  border-radius: 3px;
+}
+
+.label-bad  { color: var(--red);   background: rgba(212,79,79,.12);   border: 1px solid rgba(212,79,79,.25); }
+.label-good { color: var(--green); background: rgba(45,191,110,.12); border: 1px solid rgba(45,191,110,.25); }
+
+.problem-item {
+  display: flex; align-items: flex-start; gap: 12px;
+  margin-bottom: 16px;
+  font-size: 15px;
+  color: var(--text-sec);
+  line-height: 1.5;
+}
+
+.problem-icon { font-size: 14px; margin-top: 2px; flex-shrink: 0; }
+
+/* ── Section headers ─────────────────────────────── */
+.section-header {
+  max-width: 1100px; margin: 0 auto;
+}
+
+.section-kicker {
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  color: var(--accent); letter-spacing: 2px;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.section-title { margin-bottom: 16px; }
+
+.section-sub {
+  font-size: 18px; color: var(--text-sec); max-width: 520px; line-height: 1.6;
+}
+
+/* ── Differentiators ─────────────────────────────── */
+#differentiators {
+  padding: 100px 48px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.diff-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 2px;
+  max-width: 1100px; margin: 60px auto 0;
+}
+
+.diff-card {
+  background: var(--card);
+  padding: 40px;
+  position: relative;
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  transition: background .25s, border-color .25s, transform .25s;
+  overflow: hidden;
+}
+
+.diff-card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent), transparent);
+  opacity: 0;
+  transition: opacity .3s;
+}
+
+.diff-card:hover { background: var(--card-hover); border-color: var(--border-hi); transform: translateY(-2px); }
+.diff-card:hover::before { opacity: 1; }
+
+.diff-num {
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  color: var(--text-ter); letter-spacing: 1px;
+  margin-bottom: 20px;
+  display: block;
+}
+
+.diff-icon {
+  width: 40px; height: 40px;
+  background: var(--accent-dim);
+  border: 1px solid rgba(232,144,10,.2);
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  margin-bottom: 20px;
+}
+
+.diff-title {
+  font-family: var(--cond); font-size: 22px; font-weight: 700;
+  color: var(--text); margin-bottom: 12px; line-height: 1.2;
+}
+
+.diff-body {
+  font-size: 14px; color: var(--text-sec); line-height: 1.7;
+}
+
+.diff-body strong { color: var(--text); font-weight: 600; }
+
+.diff-tech {
+  display: flex; flex-wrap: wrap; gap: 6px; margin-top: 20px;
+}
+
+.tech-tag {
+  font-family: var(--mono); font-size: 10px; font-weight: 500;
+  color: var(--accent); background: var(--accent-dim);
+  border: 1px solid rgba(232,144,10,.2);
+  padding: 3px 8px; border-radius: 3px;
+  letter-spacing: .5px;
+}
+
+/* ── How it works ─────────────────────────────── */
+#how {
+  padding: 100px 48px;
+  border-top: 1px solid var(--border);
+}
+
+.steps {
+  max-width: 900px; margin: 60px auto 0;
+  position: relative;
+}
+
+.steps::before {
+  content: '';
+  position: absolute;
+  left: 24px; top: 0; bottom: 0;
+  width: 1px;
+  background: linear-gradient(to bottom, var(--border), var(--accent), var(--border));
+}
+
+.step {
+  display: flex; gap: 40px;
+  margin-bottom: 56px;
+  padding-left: 16px;
+}
+
+.step-num {
+  width: 48px; height: 48px; flex-shrink: 0;
+  background: var(--card);
+  border: 1px solid var(--border-hi);
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--mono); font-size: 14px; font-weight: 700;
+  color: var(--accent);
+  position: relative; z-index: 1;
+}
+
+.step-content { padding-top: 8px; }
+.step-title {
+  font-family: var(--cond); font-size: 24px; font-weight: 700;
+  color: var(--text); margin-bottom: 8px;
+}
+.step-body { font-size: 15px; color: var(--text-sec); line-height: 1.7; max-width: 520px; }
+.step-body strong { color: var(--text); }
+
+/* ── Comparison table ─────────────────────────────── */
+#compare {
+  padding: 100px 48px;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+}
+
+.compare-table {
+  max-width: 900px; margin: 60px auto 0;
+  border: 1px solid var(--border); border-radius: 8px;
+  overflow: hidden;
+}
+
+.compare-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  border-bottom: 1px solid var(--border);
+}
+.compare-row:last-child { border-bottom: none; }
+
+.compare-header {
+  background: var(--card);
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  letter-spacing: 1px; text-transform: uppercase;
+}
+
+.compare-cell {
+  padding: 16px 24px;
+  display: flex; align-items: center;
+  font-size: 14px;
+}
+
+.compare-cell:not(:first-child) {
+  justify-content: center;
+  border-left: 1px solid var(--border);
+  font-family: var(--mono); font-size: 13px;
+}
+
+.compare-header .compare-cell { color: var(--text-sec); }
+
+.compare-feature { color: var(--text-sec); }
+.compare-row:hover .compare-feature { color: var(--text); }
+
+.col-us { color: var(--green) !important; background: rgba(45,191,110,.04); }
+.col-them { color: var(--text-ter) !important; }
+
+.check { color: var(--green); font-size: 16px; }
+.cross { color: var(--text-ter); font-size: 16px; }
+.partial { color: var(--accent); font-size: 12px; }
+
+/* ── Tech strip ─────────────────────────────── */
+#tech {
+  padding: 80px 48px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.tech-strip {
+  max-width: 1100px; margin: 0 auto;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 2px;
+}
+
+.tech-item {
+  padding: 32px 28px;
+  background: var(--card);
+  border: 1px solid var(--border);
+}
+
+.tech-item-label {
+  font-family: var(--mono); font-size: 10px; font-weight: 700;
+  color: var(--text-ter); letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 8px;
+}
+.tech-item-value {
+  font-family: var(--cond); font-size: 20px; font-weight: 700;
+  color: var(--text);
+}
+
+/* ── CTA ─────────────────────────────── */
+#cta {
+  padding: 120px 48px;
+  text-align: center;
+  position: relative; overflow: hidden;
+}
+
+#cta::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 600px; height: 300px;
+  background: radial-gradient(ellipse, rgba(232,144,10,.08) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.cta-kicker {
+  font-family: var(--mono); font-size: 11px; font-weight: 700;
+  color: var(--text-sec); letter-spacing: 2px; text-transform: uppercase;
+  margin-bottom: 24px; display: block;
+}
+
+.cta-title {
+  font-family: var(--cond); font-size: clamp(42px, 7vw, 80px);
+  font-weight: 900; line-height: 1.05;
+  margin-bottom: 24px;
+}
+
+.cta-title em { color: var(--accent); font-style: normal; }
+
+.cta-sub {
+  font-size: 18px; color: var(--text-sec);
+  max-width: 480px; margin: 0 auto 48px; line-height: 1.6;
+}
+
+.cta-actions { display: flex; justify-content: center; gap: 16px; flex-wrap: wrap; }
+
+/* ── Footer ─────────────────────────────── */
+footer {
+  padding: 32px 48px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  flex-wrap: wrap; gap: 16px;
+}
+
+.footer-logo {
+  font-family: var(--cond); font-size: 18px; font-weight: 800;
+  letter-spacing: 2px; color: var(--text-sec); text-transform: uppercase;
+}
+.footer-logo span { color: var(--accent); }
+
+.footer-links { display: flex; gap: 24px; }
+.footer-links a {
+  font-family: var(--mono); font-size: 11px; color: var(--text-sec);
+  text-decoration: none; letter-spacing: 1px;
+  text-transform: uppercase;
+  transition: color .2s;
+}
+.footer-links a:hover { color: var(--text); }
+
+.footer-note {
+  font-family: var(--mono); font-size: 11px;
+  color: var(--text-ter);
+  text-align: right;
+}
+
+/* ── Animations ─────────────────────────────── */
+.fade-in {
+  opacity: 0; transform: translateY(24px);
+  transition: opacity .6s ease, transform .6s ease;
+}
+.fade-in.visible { opacity: 1; transform: translateY(0); }
+
+/* ── Section label decoration ─────────────────── */
+.section-num {
+  font-family: var(--mono); font-size: 120px; font-weight: 900;
+  color: var(--text-ter);
+  position: absolute; right: 48px; top: 80px;
+  line-height: 1;
+  pointer-events: none;
+  opacity: .4;
+}
+
+/* ── Scrollbar ─────────────────────────────── */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--border-hi); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--text-sec); }
+
+/* ── Responsive ─────────────────────────────── */
+@media (max-width: 768px) {
+  nav { padding: 14px 20px; }
+  .nav-links a:not(.btn-github) { display: none; }
+  #hero, #differentiators, #how, #compare, #tech, #cta, #problem, footer { padding-left: 20px; padding-right: 20px; }
+  .problem-grid { grid-template-columns: 1fr; }
+  .hero-stats { gap: 28px; }
+  .section-num { display: none; }
+  .diff-grid { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- ── Nav ──────────────────────────────────── -->
+<nav>
+  <a href="#" class="nav-logo">RECOV<span>E</span>RER</a>
+  <div class="nav-links">
+    <a href="#differentiators">Features</a>
+    <a href="#how">How it works</a>
+    <a href="#compare">Compare</a>
+    <a href="https://github.com/ibrahimokdadov/recoverer" target="_blank" class="btn-github">
+      <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+      GitHub
+    </a>
+  </div>
+</nav>
+
+<!-- ── Hero ──────────────────────────────────── -->
+<section id="hero">
+  <canvas id="sector-canvas"></canvas>
+
+  <div class="hero-content">
+    <div class="hero-eyebrow">Windows File Recovery · Open Source</div>
+    <h1 class="hero-title">
+      <span class="line1">RECOVER.</span>
+      <span class="line2">NOT GUESS.</span>
+    </h1>
+    <p class="hero-sub">
+      Most tools dump <strong>1,000 fragments</strong> of one video and call it a result.
+      Recoverer detects fragment chains, collapses them into one entry,
+      and reads the full span in a single pass.
+    </p>
+    <div class="hero-actions">
+      <a href="https://github.com/ibrahimokdadov/recoverer" target="_blank" class="btn-primary">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+        View on GitHub
+      </a>
+      <a href="#differentiators" class="btn-secondary">Why it's different →</a>
+    </div>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num" id="stat1">0</div>
+      <div class="stat-label">Fragment chains collapsed</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">32 MB</div>
+      <div class="stat-label">Chunk size per read</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">75%</div>
+      <div class="stat-label">MFT-backed confidence</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num">Rust</div>
+      <div class="stat-label">Memory-safe engine</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Problem ──────────────────────────────────── -->
+<section id="problem">
+  <div class="section-num">01</div>
+  <div class="section-header fade-in">
+    <span class="section-kicker">The Problem</span>
+    <h2 class="section-title">Other tools stop at finding.<br>Recovery is the hard part.</h2>
+  </div>
+
+  <div class="problem-grid fade-in">
+    <div class="problem-col">
+      <span class="problem-col-label label-bad">Other tools</span>
+      <div class="problem-item"><span class="problem-icon">✕</span> 1,000 entries for one fragmented video file</div>
+      <div class="problem-item"><span class="problem-icon">✕</span> No memory between scan sessions — start from scratch every time</div>
+      <div class="problem-item"><span class="problem-icon">✕</span> Every file shown at "100% recoverable" regardless of actual state</div>
+      <div class="problem-item"><span class="problem-icon">✕</span> Reads each fragment separately — hours of disk thrash for one file</div>
+      <div class="problem-item"><span class="problem-icon">✕</span> Written in C/C++ — silent data corruption on edge-case sectors</div>
+      <div class="problem-item"><span class="problem-icon">✕</span> Re-scanning recovers the same files you already have</div>
+    </div>
+    <div class="problem-col">
+      <span class="problem-col-label label-good">Recoverer</span>
+      <div class="problem-item"><span class="problem-icon" style="color:var(--green)">✓</span> Fragment chains collapse into one entry automatically</div>
+      <div class="problem-item"><span class="problem-icon" style="color:var(--green)">✓</span> SQLite session database persists across scans and reboots</div>
+      <div class="problem-item"><span class="problem-icon" style="color:var(--green)">✓</span> Three-tier confidence: 45% header-only → 75% MFT-backed</div>
+      <div class="problem-item"><span class="problem-icon" style="color:var(--green)">✓</span> Span-based recovery reads full chain in one contiguous pass</div>
+      <div class="problem-item"><span class="problem-icon" style="color:var(--green)">✓</span> Rust engine — memory safety at the type level, not by luck</div>
+      <div class="problem-item"><span class="problem-icon" style="color:var(--green)">✓</span> Cross-session cluster tracking pre-marks already-recovered files</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Differentiators ──────────────────────────── -->
+<section id="differentiators">
+  <div class="section-num" style="color:rgba(255,255,255,.04)">02</div>
+  <div class="section-header fade-in">
+    <span class="section-kicker">Why it's different</span>
+    <h2 class="section-title">Five things nobody<br>else does.</h2>
+    <p class="section-sub">Not features. Engineering decisions that change what recovery actually means.</p>
+  </div>
+
+  <div class="diff-grid">
+
+    <div class="diff-card fade-in">
+      <span class="diff-num">01 / 05</span>
+      <div class="diff-icon">⛓</div>
+      <div class="diff-title">Fragment Chain Detection</div>
+      <p class="diff-body">
+        When a 4 GB video is carved off a drive in a thousand pieces, every other tool shows you
+        <strong>1,000 separate entries</strong>. Recoverer detects that they're consecutive same-type clusters
+        within per-format gap tolerances — <strong>50 MB for video, 20 MB for audio</strong> —
+        and collapses them into a single chain entry. One click. Whole file.
+      </p>
+      <div class="diff-tech">
+        <span class="tech-tag">50MB video gap threshold</span>
+        <span class="tech-tag">MIME-aware grouping</span>
+        <span class="tech-tag">Sector-adjacent detection</span>
+      </div>
+    </div>
+
+    <div class="diff-card fade-in">
+      <span class="diff-num">02 / 05</span>
+      <div class="diff-icon">⚡</div>
+      <div class="diff-title">Span-Based Recovery</div>
+      <p class="diff-body">
+        Other tools read each fragment as a separate I/O job. For a badly fragmented 4 GB video
+        that could mean <strong>thousands of separate reads</strong> — effectively scanning the entire drive
+        again. Recoverer computes the full contiguous span from first sector to last and reads it
+        in <strong>32 MB chunks</strong>. Minutes, not hours.
+      </p>
+      <div class="diff-tech">
+        <span class="tech-tag">32MB chunk reads</span>
+        <span class="tech-tag">Single contiguous pass</span>
+        <span class="tech-tag">Chain span computation</span>
+      </div>
+    </div>
+
+    <div class="diff-card fade-in">
+      <span class="diff-num">03 / 05</span>
+      <div class="diff-icon">🧠</div>
+      <div class="diff-title">Cross-Session Memory</div>
+      <p class="diff-body">
+        Every recovered file is recorded by disk cluster in a persistent <strong>sessions.db</strong>.
+        Run a surface scan today, a deeper carve next week — Recoverer automatically
+        pre-marks files you already have. <strong>"Hide recovered" works across sessions</strong>,
+        not just within one run. Stop recovering the same files twice.
+      </p>
+      <div class="diff-tech">
+        <span class="tech-tag">SQLite cluster tracking</span>
+        <span class="tech-tag">Cross-session dedup</span>
+        <span class="tech-tag">ApplyScanHistory command</span>
+      </div>
+    </div>
+
+    <div class="diff-card fade-in">
+      <span class="diff-num">04 / 05</span>
+      <div class="diff-icon">📊</div>
+      <div class="diff-title">Honest Confidence Scoring</div>
+      <p class="diff-body">
+        Most tools show every find at 100% or hide the score entirely. Recoverer scores
+        each file on what's actually known: <strong>header-only match = 45%</strong>,
+        footer-confirmed = 65%, MFT-record-backed = 75%. You can see exactly
+        how solid each result is and decide whether to bother recovering it.
+      </p>
+      <div class="diff-tech">
+        <span class="tech-tag">Header scoring</span>
+        <span class="tech-tag">Footer confirmation</span>
+        <span class="tech-tag">MFT record match</span>
+      </div>
+    </div>
+
+    <div class="diff-card fade-in">
+      <span class="diff-num">05 / 05</span>
+      <div class="diff-icon">🦀</div>
+      <div class="diff-title">Rust Engine</div>
+      <p class="diff-body">
+        Every major recovery tool — Recuva, PhotoRec, R-Studio — is written in C or C++.
+        They silently corrupt results on edge-case sectors more often than their authors realize.
+        Recoverer's engine is <strong>Rust: single binary, no runtime, memory safety enforced
+        at compile time</strong>. That whole class of bug doesn't exist here.
+      </p>
+      <div class="diff-tech">
+        <span class="tech-tag">Memory-safe by design</span>
+        <span class="tech-tag">Single binary</span>
+        <span class="tech-tag">No runtime deps</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ── How it works ──────────────────────────────── -->
+<section id="how">
+  <div class="section-num">03</div>
+  <div class="section-header fade-in">
+    <span class="section-kicker">How it works</span>
+    <h2 class="section-title">Scan. Identify.<br>Recover once.</h2>
+  </div>
+
+  <div class="steps">
+    <div class="step fade-in">
+      <div class="step-num">01</div>
+      <div class="step-content">
+        <div class="step-title">Pick your scan mode</div>
+        <p class="step-body">
+          <strong>Quick scan</strong> reads the MFT — recently deleted files, 2–5 minutes.
+          <strong>Deep scan</strong> adds raw sector carving for older deletions.
+          <strong>Raw carve only</strong> scans every sector — use when the MFT is gone or the drive was formatted.
+        </p>
+      </div>
+    </div>
+
+    <div class="step fade-in">
+      <div class="step-num">02</div>
+      <div class="step-content">
+        <div class="step-title">Review with context</div>
+        <p class="step-body">
+          Results are grouped by type with fragment chains collapsed into single entries.
+          Confidence scores tell you which files are solid finds and which are partial.
+          Previously-recovered files are pre-marked so you can filter them out immediately.
+        </p>
+      </div>
+    </div>
+
+    <div class="step fade-in">
+      <div class="step-num">03</div>
+      <div class="step-content">
+        <div class="step-title">Recover in one pass</div>
+        <p class="step-body">
+          Select files and pick a destination. Recoverer reads each fragment chain as
+          a single contiguous span — no repeated disk thrash. The session is saved so
+          if you need to go deeper later, you pick up exactly where you left off.
+        </p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Comparison ──────────────────────────────────── -->
+<section id="compare">
+  <div class="section-num" style="color:rgba(255,255,255,.03)">04</div>
+  <div class="section-header fade-in">
+    <span class="section-kicker">Comparison</span>
+    <h2 class="section-title">Against the field.</h2>
+  </div>
+
+  <div class="compare-table fade-in">
+    <div class="compare-row compare-header">
+      <div class="compare-cell">Feature</div>
+      <div class="compare-cell col-us" style="color:var(--accent) !important">Recoverer</div>
+      <div class="compare-cell">Recuva / PhotoRec</div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell compare-feature">Fragment chain detection</div>
+      <div class="compare-cell col-us"><span class="check">✓</span></div>
+      <div class="compare-cell col-them"><span class="cross">✕</span></div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell compare-feature">Span-based recovery (single pass)</div>
+      <div class="compare-cell col-us"><span class="check">✓</span></div>
+      <div class="compare-cell col-them"><span class="cross">✕</span></div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell compare-feature">Cross-session recovery memory</div>
+      <div class="compare-cell col-us"><span class="check">✓</span></div>
+      <div class="compare-cell col-them"><span class="cross">✕</span></div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell compare-feature">Honest per-file confidence scoring</div>
+      <div class="compare-cell col-us"><span class="check">✓</span></div>
+      <div class="compare-cell col-them"><span class="partial">Partial</span></div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell compare-feature">Persistent scan sessions</div>
+      <div class="compare-cell col-us"><span class="check">✓</span></div>
+      <div class="compare-cell col-them"><span class="cross">✕</span></div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell compare-feature">Memory-safe engine (Rust)</div>
+      <div class="compare-cell col-us"><span class="check">✓</span></div>
+      <div class="compare-cell col-them"><span class="cross">✕ (C/C++)</span></div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell compare-feature">Native WinUI 3 interface</div>
+      <div class="compare-cell col-us"><span class="check">✓</span></div>
+      <div class="compare-cell col-them"><span class="cross">✕</span></div>
+    </div>
+    <div class="compare-row">
+      <div class="compare-cell compare-feature">Open source</div>
+      <div class="compare-cell col-us"><span class="check">✓</span></div>
+      <div class="compare-cell col-them"><span class="partial">PhotoRec only</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── Tech strip ──────────────────────────────────── -->
+<section id="tech">
+  <div class="tech-strip fade-in">
+    <div class="tech-item">
+      <div class="tech-item-label">Engine</div>
+      <div class="tech-item-value">Rust</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-item-label">UI Framework</div>
+      <div class="tech-item-value">WinUI 3</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-item-label">Session storage</div>
+      <div class="tech-item-value">SQLite</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-item-label">IPC</div>
+      <div class="tech-item-value">Named Pipe</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-item-label">Read chunk size</div>
+      <div class="tech-item-value">32 MB</div>
+    </div>
+    <div class="tech-item">
+      <div class="tech-item-label">Platform</div>
+      <div class="tech-item-value">Windows 10+</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── CTA ──────────────────────────────────── -->
+<section id="cta">
+  <span class="cta-kicker">Open Source · MIT License</span>
+  <h2 class="cta-title">Your files are still<br>there. <em>Probably.</em></h2>
+  <p class="cta-sub">
+    The sooner you act, the better the odds.
+    Stop writing new data to the drive and start a scan.
+  </p>
+  <div class="cta-actions">
+    <a href="https://github.com/ibrahimokdadov/recoverer" target="_blank" class="btn-primary">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+      Get Recoverer
+    </a>
+    <a href="https://github.com/ibrahimokdadov/recoverer/releases" target="_blank" class="btn-secondary">Download release →</a>
+  </div>
+</section>
+
+<!-- ── Footer ──────────────────────────────────── -->
+<footer>
+  <div class="footer-logo">RECOV<span>E</span>RER</div>
+  <div class="footer-links">
+    <a href="https://github.com/ibrahimokdadov/recoverer" target="_blank">GitHub</a>
+    <a href="https://github.com/ibrahimokdadov/recoverer/issues" target="_blank">Issues</a>
+    <a href="https://github.com/ibrahimokdadov/recoverer/blob/master/README.md" target="_blank">Docs</a>
+  </div>
+  <div class="footer-note">MIT License · Windows 10+ · x64</div>
+</footer>
+
+<script>
+/* ── Sector canvas animation ──────────────────── */
+(function() {
+  const canvas = document.getElementById('sector-canvas');
+  const ctx = canvas.getContext('2d');
+
+  const CELL = 14;
+  const GAP  = 2;
+  const STEP = CELL + GAP;
+
+  let cols, rows, cells;
+  const STATES = { EMPTY: 0, SCANNING: 1, FOUND: 2, CHAIN: 3, RECOVERED: 4 };
+
+  function resize() {
+    canvas.width  = canvas.offsetWidth;
+    canvas.height = canvas.offsetHeight;
+    cols = Math.ceil(canvas.width  / STEP) + 2;
+    rows = Math.ceil(canvas.height / STEP) + 2;
+    cells = new Uint8Array(cols * rows);
+    // seed a few recovered
+    for (let i = 0; i < cells.length; i++) {
+      const r = Math.random();
+      if      (r < .04) cells[i] = STATES.RECOVERED;
+      else if (r < .08) cells[i] = STATES.FOUND;
+      else if (r < .10) cells[i] = STATES.CHAIN;
+    }
+  }
+
+  resize();
+  window.addEventListener('resize', resize);
+
+  const COLORS = {
+    [STATES.EMPTY]:     'rgba(29, 35, 48, 0.9)',
+    [STATES.SCANNING]:  'rgba(232, 144, 10, 0.6)',
+    [STATES.FOUND]:     'rgba(232, 144, 10, 0.9)',
+    [STATES.CHAIN]:     'rgba(232, 144, 10, 1.0)',
+    [STATES.RECOVERED]: 'rgba(45, 191, 110, 0.7)',
+  };
+
+  let scanCol = 0;
+  let tick = 0;
+  const SPEED = 0.18; // cols per frame
+
+  function frame() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // advance scan column
+    scanCol = (scanCol + SPEED) % (cols + 4);
+
+    // update cells near scan head
+    const sc = Math.floor(scanCol);
+    for (let r = 0; r < rows; r++) {
+      for (let dc = -1; dc <= 1; dc++) {
+        const c = sc + dc;
+        if (c < 0 || c >= cols) continue;
+        const idx = r * cols + c;
+        if (cells[idx] === STATES.EMPTY && Math.random() < .04) {
+          cells[idx] = STATES.SCANNING;
+        }
+      }
+      // promote scanning -> found
+      if (sc > 0) {
+        const idx = r * cols + (sc - 2);
+        if (idx >= 0 && cells[idx] === STATES.SCANNING) {
+          const rnd = Math.random();
+          if      (rnd < .03) cells[idx] = STATES.CHAIN;
+          else if (rnd < .15) cells[idx] = STATES.FOUND;
+          else                cells[idx] = STATES.EMPTY;
+        }
+      }
+    }
+
+    // draw cells
+    for (let r = 0; r < rows; r++) {
+      for (let c = 0; c < cols; c++) {
+        const idx = r * cols + c;
+        const state = cells[idx];
+        if (state === STATES.EMPTY && Math.random() > .15) continue;
+
+        ctx.fillStyle = COLORS[state] || COLORS[STATES.EMPTY];
+
+        // glow for active cells
+        if (state === STATES.CHAIN || state === STATES.FOUND) {
+          ctx.shadowColor = state === STATES.CHAIN ? '#E8900A' : '#E8900A';
+          ctx.shadowBlur  = state === STATES.CHAIN ? 8 : 4;
+        } else {
+          ctx.shadowBlur = 0;
+        }
+
+        const x = c * STEP;
+        const y = r * STEP;
+        ctx.fillRect(x, y, CELL, CELL);
+      }
+    }
+
+    // scan line
+    const sx = scanCol * STEP;
+    const grad = ctx.createLinearGradient(sx - 40, 0, sx + 20, 0);
+    grad.addColorStop(0, 'rgba(232,144,10,0)');
+    grad.addColorStop(.5,'rgba(232,144,10,.12)');
+    grad.addColorStop(1, 'rgba(232,144,10,0)');
+    ctx.shadowBlur = 0;
+    ctx.fillStyle = grad;
+    ctx.fillRect(sx - 40, 0, 60, canvas.height);
+
+    tick++;
+    requestAnimationFrame(frame);
+  }
+  frame();
+})();
+
+/* ── Counter animation ────────────────────────── */
+(function() {
+  const el = document.getElementById('stat1');
+  let started = false;
+  const target = 1247;
+
+  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+  const obs = new IntersectionObserver(entries => {
+    if (entries[0].isIntersecting && !started) {
+      started = true;
+      const start = performance.now();
+      const dur = 2000;
+      function tick(now) {
+        const t = Math.min((now - start) / dur, 1);
+        el.textContent = Math.round(easeOut(t) * target).toLocaleString();
+        if (t < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    }
+  });
+  obs.observe(el);
+})();
+
+/* ── Scroll fade-in ────────────────────────────── */
+(function() {
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach((e, i) => {
+      if (e.isIntersecting) {
+        setTimeout(() => e.target.classList.add('visible'), i * 80);
+        obs.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.1 });
+
+  document.querySelectorAll('.fade-in').forEach(el => obs.observe(el));
+})();
+</script>
+</body>
+</html>
