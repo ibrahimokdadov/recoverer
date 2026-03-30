@@ -1,0 +1,140 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#07080A"/>
+      <stop offset="100%" style="stop-color:#0D1420"/>
+    </linearGradient>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1A2030" stroke-width="1"/>
+    </pattern>
+    <linearGradient id="glow" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#E8900A;stop-opacity:0.4"/>
+      <stop offset="60%" style="stop-color:#E8900A;stop-opacity:0.05"/>
+      <stop offset="100%" style="stop-color:#E8900A;stop-opacity:0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1200" height="630" fill="url(#bg)"/>
+  <rect width="1200" height="630" fill="url(#grid)" opacity="0.6"/>
+
+  <!-- Ambient glow top-left -->
+  <ellipse cx="200" cy="200" rx="400" ry="240" fill="#E8900A" opacity="0.04"/>
+
+  <!-- Accent bar left edge -->
+  <rect x="0" y="0" width="6" height="630" fill="#E8900A"/>
+
+  <!-- Sector dots — decorative, suggests disk scanning -->
+  <g opacity="0.18">
+    <!-- Row 1 -->
+    <rect x="820" y="80"  width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="838" y="80"  width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="856" y="80"  width="10" height="10" rx="2" fill="#2DBF6E"/>
+    <rect x="874" y="80"  width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="892" y="80"  width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="910" y="80"  width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="928" y="80"  width="10" height="10" rx="2" fill="#2DBF6E"/>
+    <rect x="946" y="80"  width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="964" y="80"  width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="982" y="80"  width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="1000" y="80" width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="1018" y="80" width="10" height="10" rx="2" fill="#2DBF6E"/>
+    <rect x="1036" y="80" width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="1054" y="80" width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="1072" y="80" width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="1090" y="80" width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="1108" y="80" width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="1126" y="80" width="10" height="10" rx="2" fill="#2DBF6E"/>
+    <rect x="1144" y="80" width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="1162" y="80" width="10" height="10" rx="2" fill="#E8900A"/>
+    <!-- Row 2 -->
+    <rect x="820" y="98"  width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="838" y="98"  width="10" height="10" rx="2" fill="#2DBF6E"/>
+    <rect x="856" y="98"  width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="874" y="98"  width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="892" y="98"  width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="910" y="98"  width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="928" y="98"  width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="946" y="98"  width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="964" y="98"  width="10" height="10" rx="2" fill="#2DBF6E"/>
+    <rect x="982" y="98"  width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="1000" y="98" width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="1018" y="98" width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="1036" y="98" width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="1054" y="98" width="10" height="10" rx="2" fill="#2DBF6E"/>
+    <rect x="1072" y="98" width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="1090" y="98" width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="1108" y="98" width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="1126" y="98" width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="1144" y="98" width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="1162" y="98" width="10" height="10" rx="2" fill="#2DBF6E"/>
+    <!-- Rows 3–8 (lighter, fade toward bottom) -->
+    <rect x="820" y="116" width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="856" y="116" width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="892" y="116" width="10" height="10" rx="2" fill="#2DBF6E"/>
+    <rect x="928" y="116" width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="964" y="116" width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="1000" y="116" width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="1036" y="116" width="10" height="10" rx="2" fill="#2DBF6E"/>
+    <rect x="1072" y="116" width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="1108" y="116" width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="1144" y="116" width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="838" y="134" width="10" height="10" rx="2" fill="#2DBF6E"/>
+    <rect x="874" y="134" width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="946" y="134" width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="982" y="134" width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="1054" y="134" width="10" height="10" rx="2" fill="#2DBF6E"/>
+    <rect x="1090" y="134" width="10" height="10" rx="2" fill="#E8900A"/>
+    <rect x="1126" y="134" width="10" height="10" rx="2" fill="#1A2030"/>
+    <rect x="1162" y="134" width="10" height="10" rx="2" fill="#E8900A"/>
+  </g>
+
+  <!-- Scan line overlay -->
+  <rect x="820" y="70" width="370" height="90" fill="url(#glow)" opacity="0.5"/>
+
+  <!-- App name -->
+  <text x="80" y="300"
+        font-family="'Arial Narrow', 'Arial', sans-serif"
+        font-size="108" font-weight="900"
+        letter-spacing="-3"
+        fill="#DDE2EC">RECOVER</text>
+  <text x="80" y="300"
+        font-family="'Arial Narrow', 'Arial', sans-serif"
+        font-size="108" font-weight="900"
+        letter-spacing="-3"
+        fill="#E8900A"
+        transform="translate(648,0)">ER</text>
+
+  <!-- Tagline -->
+  <text x="80" y="368"
+        font-family="Arial, sans-serif"
+        font-size="26" font-weight="400" letter-spacing="0.5"
+        fill="#68748A">File recovery that actually works — for Windows</text>
+
+  <!-- Divider -->
+  <line x1="80" y1="400" x2="560" y2="400" stroke="#1D2330" stroke-width="1"/>
+
+  <!-- Feature pills -->
+  <rect x="80"  y="418" width="110" height="30" rx="15" fill="#E8900A" opacity="0.12"/>
+  <text x="135" y="438" text-anchor="middle" font-family="'Courier New', monospace"
+        font-size="13" fill="#E8900A">Fragment chains</text>
+
+  <rect x="202" y="418" width="88" height="30" rx="15" fill="#E8900A" opacity="0.12"/>
+  <text x="246" y="438" text-anchor="middle" font-family="'Courier New', monospace"
+        font-size="13" fill="#E8900A">Rust engine</text>
+
+  <rect x="302" y="418" width="106" height="30" rx="15" fill="#2DBF6E" opacity="0.12"/>
+  <text x="355" y="438" text-anchor="middle" font-family="'Courier New', monospace"
+        font-size="13" fill="#2DBF6E">Open source</text>
+
+  <rect x="420" y="418" width="92" height="30" rx="15" fill="#E8900A" opacity="0.12"/>
+  <text x="466" y="438" text-anchor="middle" font-family="'Courier New', monospace"
+        font-size="13" fill="#E8900A">WinUI 3</text>
+
+  <!-- Domain badge -->
+  <rect x="80" y="540" width="240" height="34" rx="6" fill="#E8900A" opacity="0.1"/>
+  <rect x="80" y="540" width="240" height="34" rx="6" fill="none" stroke="#E8900A" stroke-width="1" opacity="0.25"/>
+  <text x="200" y="563" text-anchor="middle"
+        font-family="'Courier New', monospace" font-size="15"
+        fill="#E8900A">recoverer.whhite.com</text>
+</svg>
